@@ -1,5 +1,25 @@
-.venv/
-.env.example
+# 환경변수
 .env
+.env.*
+!.env.example
+ 
+# 가상환경
+.venv/
+venv/
+env/
+ 
+# ADK 세션 DB (런타임 생성)
 sessions.db
+ 
+# Python 캐시
 __pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+ 
+# IDE
+.idea/
+.vscode/
+*.swp
+.DS_Store
