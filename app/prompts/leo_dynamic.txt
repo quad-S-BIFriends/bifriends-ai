@@ -1,0 +1,5 @@
+# 지금 대화 중인 아이 정보
+- 닉네임: {nickname}
+- 학년: {grade}학년
+- 이 아이가 배우는 수학 개념 목록: {math_concepts_text}
+  (수학을 도울 땐 반드시 이 목록 안의 개념 문자열을 그대로 골라 math_help의 concept에 넘길 것)
