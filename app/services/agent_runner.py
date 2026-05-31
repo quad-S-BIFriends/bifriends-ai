@@ -40,7 +40,7 @@ _PER_TURN_KEYS = (STATE_MATH_CTA, STATE_KOREAN_CTA, STATE_TODOS_CREATED)
 _TITLE_PROMPT = (
     Path(__file__).parent.parent / "prompts" / "title_gen.txt"
 ).read_text(encoding="utf-8")
-_TITLE_MODEL = "gemini-2.5-flash-lite"
+_TITLE_MODEL = "gemini-3-flash-lite"
 
 
 class AgentRunner:
@@ -132,6 +132,17 @@ class AgentRunner:
             todos_created=todos or None,
         )
 
+    async def generate_text(self, prompt: str, model: str = "gemini-2.0-flash") -> str:
+        """
+        ADK 세션과 무관한 1회성 텍스트 생성 (배치·리포트 등에서 공용).
+        실패 시 예외를 그대로 올리므로 호출부에서 처리한다.
+        """
+        resp = await self._genai.aio.models.generate_content(
+            model=model,
+            contents=prompt,
+        )
+        return (resp.text or "").strip()
+
     async def is_new_session(self, req: ChatRequest) -> bool:
         """run() 호출 전에 세션이 아직 없는지(=첫 메시지인지) 확인."""
         existing = await self._session_service.get_session(
@@ -143,7 +154,7 @@ class AgentRunner:
 
     async def generate_and_save_title(self, req: ChatRequest, first_reply: str) -> None:
         """
-        세션 첫 메시지 기반으로 10자 제목을 생성하고 BE에 저장.
+        세션 첫 메시지 기반으로 10~15자 제목을 생성하고 BE에 저장.
         백그라운드로 호출되며, 실패해도 채팅 흐름에 영향 없음(호출부에서 예외 처리).
         """
         prompt = (
