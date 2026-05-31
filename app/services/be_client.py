@@ -38,13 +38,11 @@ class BEClient:
             raise RuntimeError("BEClient가 초기화되지 않았습니다. initialize()를 먼저 호출하세요.")
         return self._client
 
-    # ---------- memberId 전달 방식 (회의 후 여기만 수정) ----------
     @staticmethod
     def _member_params(member_id: int, **extra) -> dict:
         """
         내부 API에 회원을 식별시키는 방법.
-        현재 가정: query param ?memberId={id}
-        만약 헤더 방식으로 바뀌면 이 함수 대신 _member_headers() 같은 걸 추가.
+        현재: query param ?memberId={id}
         """
         return {"memberId": member_id, **extra}
 
@@ -134,6 +132,28 @@ class BEClient:
         resp.raise_for_status()
         return resp.json()
 
+    # ================================================================
+    # 부모 성장 리포트 — 주간 학습 집계 조회
+    # ================================================================
+    async def get_learning_summary(
+        self, member_id: int, week_start: str, week_end: str
+    ) -> dict:
+        """
+        리포트용 주간 학습 집계 (BE가 신설할 API).
+        응답 예:
+          {
+            "math":   [{ "concept", "solved", "avg_attempts", "avg_hints" }, ...],
+            "korean": [{ ... }],
+            "todos":  { "assigned": 15, "completed": 12 }
+          }
+        """
+        resp = await self.client.get(
+            "/api/v1/report/learning-summary",
+            params={"memberId": member_id, "from": week_start, "to": week_end},
+        )
+        resp.raise_for_status()
+        return resp.json()
+ 
 
 # 앱 전역에서 공유하는 단일 인스턴스
 be_client = BEClient()
