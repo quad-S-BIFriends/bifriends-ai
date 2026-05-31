@@ -7,19 +7,22 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.routers import chat, batch, report, content
 from app.core.config import settings
 from app.services.agent_runner import agent_runner
+from app.services.be_client import be_client
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    await be_client.initialize()
     await agent_runner.initialize()
-    print("✅ ADK Runner 초기화 완료")
+    print("✅ BE 클라이언트 + ADK Runner 초기화 완료")
     yield
+    await be_client.aclose()
     print("👋 서버 종료")
 
 
 app = FastAPI(
     title="비프렌드 AI API",
-    description="아이의 속도로 배우고 소통하는 느린 학습자 아이의 성장 앱",
+    description="경계선 지능 아동을 위한 학습 도우미 AI 서비스",
     version="0.1.0",
     lifespan=lifespan,
     docs_url="/docs" if settings.is_dev else None,
@@ -46,9 +49,4 @@ async def health_check():
 
 
 if __name__ == "__main__":
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=settings.app_port,
-        reload=settings.is_dev,
-    )
+    uvicorn.run("main:app", host="0.0.0.0", port=settings.app_port, reload=settings.is_dev)
