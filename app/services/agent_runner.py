@@ -16,7 +16,9 @@ ADK 1.18.0 기준:
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
+from google import genai
 from google.adk.runners import Runner
 from google.adk.sessions import DatabaseSessionService
 from google.genai import types
@@ -34,11 +36,18 @@ _APP_NAME = "bifriends"
 # 매 턴 시작 시 비워야 할 CTA/결과 state 키
 _PER_TURN_KEYS = (STATE_MATH_CTA, STATE_KOREAN_CTA, STATE_TODOS_CREATED)
 
+# 제목 생성 프롬프트
+_TITLE_PROMPT = (
+    Path(__file__).parent.parent / "prompts" / "title_gen.txt"
+).read_text(encoding="utf-8")
+_TITLE_MODEL = "gemini-2.5-flash-lite"
+
 
 class AgentRunner:
     def __init__(self) -> None:
         self._runner: Runner | None = None
         self._session_service: DatabaseSessionService | None = None
+        self._genai: genai.Client | None = None
 
     async def initialize(self) -> None:
         self._session_service = DatabaseSessionService(db_url=settings.session_db_url)
@@ -47,6 +56,8 @@ class AgentRunner:
             app_name=_APP_NAME,
             session_service=self._session_service,
         )
+        # 제목 생성용 경량 genai 클라이언트 (ADK와 별개 1회성 호출)
+        self._genai = genai.Client(api_key=settings.google_api_key)
 
     @property
     def runner(self) -> Runner:
@@ -120,6 +131,33 @@ class AgentRunner:
             cta=cta,                       # dict 그대로 (이미 검증된 CTA)
             todos_created=todos or None,
         )
+
+    async def is_new_session(self, req: ChatRequest) -> bool:
+        """run() 호출 전에 세션이 아직 없는지(=첫 메시지인지) 확인."""
+        existing = await self._session_service.get_session(
+            app_name=_APP_NAME,
+            user_id=str(req.member_id),
+            session_id=req.session_id,
+        )
+        return existing is None
+
+    async def generate_and_save_title(self, req: ChatRequest, first_reply: str) -> None:
+        """
+        세션 첫 메시지 기반으로 10자 제목을 생성하고 BE에 저장.
+        백그라운드로 호출되며, 실패해도 채팅 흐름에 영향 없음(호출부에서 예외 처리).
+        """
+        prompt = (
+            f"{_TITLE_PROMPT}\n\n"
+            f"아이: {req.message}\n"
+            f"레오: {first_reply}"
+        )
+        resp = await self._genai.aio.models.generate_content(
+            model=_TITLE_MODEL,
+            contents=prompt,
+        )
+        title = (resp.text or "").strip()
+        if title:
+            await be_client.patch_session_title(req.session_id, title)
 
 
 agent_runner = AgentRunner()
