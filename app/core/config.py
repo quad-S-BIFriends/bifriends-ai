@@ -6,6 +6,7 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
+        extra="ignore",
     )
     google_api_key: str = ""
     google_genai_use_vertexai: bool = False
