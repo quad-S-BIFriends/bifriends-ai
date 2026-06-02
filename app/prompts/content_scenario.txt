@@ -71,46 +71,48 @@
   looking frustrated. Child-friendly, not scary, not aggressive."
   cast: "main"   ← 감정발생 컷은 보통 주인공 단독
 
-# 출력 형식 (순수 JSON, 코드펜스 금지, JSON 외 텍스트 금지)
+ 출력 형식 (순수 JSON, 코드펜스 금지, JSON 외 텍스트 금지)
+# 주의: 아래 예시의 모든 feedback/success_message는 '완성된 실제 문장'으로 채워야 한다.
+#       "..." 같은 생략·자리표시자를 출력하지 마라. 모든 칸을 끝까지 채운다.
 {
   "situation": "학교 운동장",
   "learned_expression": "열불이 난다",
   "step1": {
     "expression": "열불이 난다",
-    "body_sensation": "몸 안에서 뜨거운 게 확 올라오는 느낌이 들어요!",
+    "body_sensation": "몸 안에서 뜨거운 게 확 올라오는 것 같고 주먹에 힘이 꽉 들어가요.",
     "situation_example": "친구가 내 말을 계속 못 듣고 넘어갈 때 이런 마음이 들 수 있어요."
   },
   "step2": {
     "visual_clue": "눈썹이 잔뜩 찌푸려져 있고 얼굴이 빨개져 있어요.",
     "choices": [
-      {"id":"A","text":"화남","is_correct":true,"feedback":"맞아요! ..."},
-      {"id":"B","text":"속상함","is_correct":false,"feedback":"..."},
-      {"id":"C","text":"실망","is_correct":false,"feedback":"..."}
+      {"id":"A","text":"화남","is_correct":true,"feedback":"맞아요! 눈썹이 찌푸려지고 얼굴이 빨개진 걸 보면 화난 마음이 느껴져요."},
+      {"id":"B","text":"속상함","is_correct":false,"feedback":"속상할 때는 눈물이 올라오는 느낌이 들어요. 이 친구는 눈썹에 힘이 들어가 있어 화남에 더 가까워요."},
+      {"id":"C","text":"실망","is_correct":false,"feedback":"실망할 때는 힘이 빠지는 느낌이에요. 이 친구는 뜨거운 게 올라오는 화남에 더 가까워요."}
     ]
   },
   "step3": {
     "background": "school playground",
     "comic": [
       {"cut":1,"text":"민이는 친구들과 팀을 나눴어요.","cast":"main+friend",
-       "scene":"The main character and the friend are dividing into teams on a playground, smiling and talking."},
+       "scene":"The main character and the friend stand together on a playground, smiling and talking while dividing into teams."},
       {"cut":2,"text":"민이가 말했는데 친구가 못 듣고 넘어갔어요.","cast":"main+friend",
-       "scene":"The main character speaks with one hand raised toward the friend, but the friend looks away distracted, not noticing."},
+       "scene":"The main character is on the left, speaking with one hand raised toward the friend, mouth open. The friend is on the right, turned away, distracted, not noticing."},
       {"cut":3,"text":"민이는 몸 안에 열이 확 올라왔어요.","cast":"main",
        "scene":"The main character stands alone, clearly angry, eyebrows strongly furrowed, fists clenched, mildly red face, child-friendly not scary."}
     ],
     "choices": [
-      {"id":"A","text":"친구가 민이 말을 듣지 않고 넘어갔어요.","is_correct":true,"feedback":"맞아요! ..."},
-      {"id":"B","text":"...","is_correct":false,"feedback":"..."},
-      {"id":"C","text":"...","is_correct":false,"feedback":"..."}
+      {"id":"A","text":"친구가 민이 말을 듣지 않고 넘어갔어요.","is_correct":true,"feedback":"맞아요! 말을 해도 친구가 들어주지 않아서 민이는 열불이 났어요."},
+      {"id":"B","text":"친구가 민이를 팀에 불러줬어요.","is_correct":false,"feedback":"팀에 불러준 건 기분 좋은 일일 수 있어요. 두 번째 그림을 다시 보면 도움이 돼요."},
+      {"id":"C","text":"민이가 게임에서 이겼어요.","is_correct":false,"feedback":"게임에서 이기면 신나는 마음이 들어요. 어떤 일이 마음을 바꿨는지 다시 볼까요?"}
     ]
   },
   "step4": {
     "leo_intro": "맞아요! 친구가 말을 듣지 않고 넘어가서 민이는 화남을 느꼈어요. 이럴 때 {nickname}이는 뭐라고 말해줄까요?",
     "choices": [
-      {"id":"A","text":"공감하는 말","type":"empathetic","is_correct":true,"feedback":"..."},
-      {"id":"B","text":"무관심한 말","type":"indifferent","is_correct":false,"feedback":"..."},
-      {"id":"C","text":"상황과 무관한 말","type":"irrelevant","is_correct":false,"feedback":"..."}
+      {"id":"A","text":"미안해, 못 들었어. 다시 말해줄 수 있을까?","type":"empathetic","is_correct":true,"feedback":"정말 잘했어요! 사과하고 다시 들으려는 모습에 민이의 화가 풀릴 거예요."},
+      {"id":"B","text":"그냥 넘어가면 되잖아.","type":"indifferent","is_correct":false,"feedback":"그냥 넘어가면 민이는 여전히 속상할 수 있어요. 먼저 미안하다고 말해주면 좋아요."},
+      {"id":"C","text":"나 몰라, 다른 애한테 물어봐.","type":"irrelevant","is_correct":false,"feedback":"그 말은 민이를 더 속상하게 만들 수 있어요. 용기 내서 먼저 사과해보면 어떨까요?"}
     ],
-    "success_message": "정말 멋진 대답이에요! ..."
+    "success_message": "정말 멋진 대답이에요! 사과하고 다시 들어주려는 말 한 마디가 친구 사이를 따뜻하게 만들어요."
   }
 }
