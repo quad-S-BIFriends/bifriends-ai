@@ -1,0 +1,241 @@
+{
+  "화남": {
+    "situation": "학교 운동장",
+    "learned_expression": "열불이 난다",
+    "step1": {
+      "expression": "열불이 난다",
+      "body_sensation": "몸 안에서 뜨거운 게 확 올라오는 것 같고 주먹에 힘이 꽉 들어가요.",
+      "situation_example": "친구가 내 말을 계속 못 듣고 넘어갈 때 이런 마음이 들 수 있어요."
+    },
+    "step2": {
+      "visual_clue": "눈썹이 잔뜩 찌푸려져 있고 얼굴이 빨개져 있어요.",
+      "choices": [
+        {"id": "A", "text": "화남", "is_correct": true, "feedback": "맞아요! 눈썹이 찌푸려지고 얼굴이 빨개진 걸 보면 화난 마음이 느껴져요."},
+        {"id": "B", "text": "속상함", "is_correct": false, "feedback": "속상할 때는 눈물이 올라오는 느낌이 들어요. 이 친구는 눈썹에 힘이 들어가 있어 화남에 더 가까워요."},
+        {"id": "C", "text": "실망", "is_correct": false, "feedback": "실망할 때는 힘이 빠지는 느낌이에요. 이 친구는 뜨거운 게 올라오는 화남에 더 가까워요."}
+      ]
+    },
+    "step3": {
+      "background": "school playground",
+      "comic": [
+        {"cut": 1, "text": "민이는 친구들과 팀을 나눴어요."},
+        {"cut": 2, "text": "민이가 말했는데 친구가 못 듣고 넘어갔어요."},
+        {"cut": 3, "text": "민이는 몸 안에 열이 확 올라왔어요."}
+      ],
+      "choices": [
+        {"id": "A", "text": "친구가 민이 말을 듣지 않고 넘어갔어요.", "is_correct": true, "feedback": "맞아요! 말을 해도 친구가 들어주지 않아서 민이는 열불이 났어요."},
+        {"id": "B", "text": "친구가 민이를 팀에 불러줬어요.", "is_correct": false, "feedback": "팀에 불러준 건 기분 좋은 일일 수 있어요. 두 번째 그림을 다시 보면 도움이 돼요."},
+        {"id": "C", "text": "민이가 게임에서 이겼어요.", "is_correct": false, "feedback": "게임에서 이기면 신나는 마음이 들어요. 어떤 일이 마음을 바꿨는지 다시 볼까요?"}
+      ]
+    },
+    "step4": {
+      "leo_intro": "맞아요! 친구가 말을 듣지 않고 넘어가서 민이는 화남을 느꼈어요. 이럴 때 친구는 뭐라고 말해줄까요?",
+      "choices": [
+        {"id": "A", "text": "미안해, 못 들었어. 다시 말해줄 수 있을까?", "type": "empathetic", "is_correct": true, "feedback": "정말 잘했어요! 사과하고 다시 들으려는 모습에 민이의 화가 풀릴 거예요."},
+        {"id": "B", "text": "그냥 넘어가면 되잖아.", "type": "indifferent", "is_correct": false, "feedback": "그냥 넘어가면 민이는 여전히 속상할 수 있어요. 먼저 미안하다고 말해주면 좋아요."},
+        {"id": "C", "text": "나 몰라, 다른 애한테 물어봐.", "type": "irrelevant", "is_correct": false, "feedback": "그 말은 민이를 더 속상하게 만들 수 있어요. 용기 내서 먼저 사과해보면 어떨까요?"}
+      ],
+      "success_message": "정말 멋진 대답이에요! 사과하고 다시 들어주려는 말 한 마디가 친구 사이를 따뜻하게 만들어요."
+    }
+  },
+
+  "기쁨": {
+    "situation": "학교 놀이터",
+    "learned_expression": "가슴이 벅차다",
+    "step1": {
+      "expression": "가슴이 벅차다",
+      "body_sensation": "가슴 안에 따뜻하고 커다란 게 가득 차오르는 느낌이 들어요.",
+      "situation_example": "친구와 함께 열심히 한 팀 과제가 칭찬을 받았을 때 이런 마음이 들 수 있어요."
+    },
+    "step2": {
+      "visual_clue": "눈이 반짝반짝 빛나고 입꼬리가 활짝 올라가 있어요.",
+      "choices": [
+        {"id": "A", "text": "기쁨", "is_correct": true, "feedback": "맞아요! 눈이 반짝이고 입꼬리가 올라간 걸 보면 가슴 가득 기쁜 마음이 느껴져요."},
+        {"id": "B", "text": "설렘", "is_correct": false, "feedback": "설렐 때도 두근두근할 수 있어요. 그런데 이 친구는 이미 좋은 일이 생겨서 가슴이 가득 찬 기쁨에 더 가까워요."},
+        {"id": "C", "text": "뿌듯함", "is_correct": false, "feedback": "뿌듯할 때도 마음이 따뜻해질 수 있어요. 이 친구는 그보다 더 크게 넘치는 기쁜 마음을 표현하고 있어요."}
+      ]
+    },
+    "step3": {
+      "background": "school classroom",
+      "comic": [
+        {"cut": 1, "text": "민이와 친구는 함께 그림을 그렸어요."},
+        {"cut": 2, "text": "선생님이 민이 그림을 칭찬해 줬어요."},
+        {"cut": 3, "text": "민이는 가슴이 꽉 차오르는 것 같았어요."}
+      ],
+      "choices": [
+        {"id": "A", "text": "선생님이 민이 그림을 칭찬해 줬어요.", "is_correct": true, "feedback": "맞아요! 친구와 함께 그린 그림을 칭찬받아서 민이는 가슴이 벅찼어요."},
+        {"id": "B", "text": "친구가 민이 그림을 망가뜨렸어요.", "is_correct": false, "feedback": "그림이 망가지면 속상한 기분이 들 수 있어요. 두 번째 그림을 다시 보면 도움이 돼요."},
+        {"id": "C", "text": "민이 혼자 조용히 앉아 있었어요.", "is_correct": false, "feedback": "민이는 혼자가 아니었어요. 첫 번째 그림부터 다시 보면 어떤 일이 있었는지 알 수 있어요."}
+      ]
+    },
+    "step4": {
+      "leo_intro": "맞아요! 선생님이 그림을 칭찬해 줘서 민이는 기쁨을 느꼈어요. 이럴 때 친구는 뭐라고 말해줄까요?",
+      "choices": [
+        {"id": "A", "text": "우리 같이 그려서 더 잘된 것 같아. 정말 기쁘다!", "type": "empathetic", "is_correct": true, "feedback": "정말 따뜻한 말이에요! 함께한 기쁨을 나눠주는 말이라 친구도 더 행복해질 수 있어요."},
+        {"id": "B", "text": "나도 칭찬받고 싶었는데.", "type": "indifferent", "is_correct": false, "feedback": "그 마음도 이해돼요. 그런데 먼저 친구의 기쁜 마음을 함께 나눠주면 더 좋을 것 같아요."},
+        {"id": "C", "text": "나 오늘 도시락에 김밥이 있어.", "type": "irrelevant", "is_correct": false, "feedback": "그 말은 지금 상황과 조금 달라요. 친구의 기쁜 마음을 먼저 알아봐 주면 어떨까요?"}
+      ],
+      "success_message": "정말 멋진 대답이에요! 친구가 기쁨을 함께 나눌 수 있어서 더 행복해질 거예요."
+    }
+  },
+
+  "속상함": {
+    "situation": "학교 놀이터",
+    "learned_expression": "울컥한다",
+    "step1": {
+      "expression": "울컥한다",
+      "body_sensation": "목 안쪽이 꽉 막히는 것 같고 눈물이 올라오는 느낌이 들어요.",
+      "situation_example": "친구가 내가 열심히 만든 걸 별로라고 했을 때 이런 마음이 들 수 있어요."
+    },
+    "step2": {
+      "visual_clue": "눈이 살짝 빨개지고 입술이 떨리고 있어요.",
+      "choices": [
+        {"id": "A", "text": "속상함", "is_correct": true, "feedback": "맞아요! 눈물이 올라오고 입술이 떨리는 걸 보면 마음이 많이 속상한 상태예요."},
+        {"id": "B", "text": "불안", "is_correct": false, "feedback": "불안할 때는 걱정이 많아서 몸이 긴장되는 느낌이 들어요. 이 친구는 마음이 꽉 막혀 눈물이 올라오는 속상함에 더 가까워요."},
+        {"id": "C", "text": "실망", "is_correct": false, "feedback": "실망할 때도 힘이 빠지는 느낌이 들 수 있어요. 이 친구는 눈물이 올라올 만큼 마음이 꽉 차 있어서 속상함에 더 가까워요."}
+      ]
+    },
+    "step3": {
+      "background": "school classroom",
+      "comic": [
+        {"cut": 1, "text": "민이는 친구에게 줄 카드를 만들었어요."},
+        {"cut": 2, "text": "친구가 카드를 보고 시큰둥하게 말했어요."},
+        {"cut": 3, "text": "민이는 눈물이 올라오는 것 같았어요."}
+      ],
+      "choices": [
+        {"id": "A", "text": "친구가 카드를 별로라는 반응을 했어요.", "is_correct": true, "feedback": "맞아요! 열심히 만든 카드를 친구가 기뻐해 주지 않아서 민이는 울컥했어요."},
+        {"id": "B", "text": "친구가 카드를 받고 고맙다고 했어요.", "is_correct": false, "feedback": "고맙다는 말을 들으면 기쁜 마음이 들 거예요. 두 번째 그림을 다시 보면 도움이 돼요."},
+        {"id": "C", "text": "민이가 카드 만들기를 포기했어요.", "is_correct": false, "feedback": "민이는 카드를 끝까지 만들었어요. 첫 번째 그림부터 다시 보면 어떤 일이 있었는지 알 수 있어요."}
+      ]
+    },
+    "step4": {
+      "leo_intro": "맞아요! 친구가 카드를 별로라는 반응을 해서 민이는 속상함을 느꼈어요. 이럴 때 친구는 뭐라고 말해줄까요?",
+      "choices": [
+        {"id": "A", "text": "네가 직접 만든 거잖아. 나는 좋은데.", "type": "empathetic", "is_correct": true, "feedback": "정말 따뜻한 말이에요! 친구의 노력을 알아봐 주는 말이라 민이가 위로받을 수 있어요."},
+        {"id": "B", "text": "다음엔 더 잘 만들면 되잖아.", "type": "indifferent", "is_correct": false, "feedback": "더 잘할 수 있다는 말도 맞지만, 지금 민이에게는 먼저 속상한 마음을 알아주는 말이 필요해요."},
+        {"id": "C", "text": "나 어제 새 지우개 샀어.", "type": "irrelevant", "is_correct": false, "feedback": "그 말은 지금 상황과 조금 달라요. 민이의 속상한 마음을 먼저 봐주면 어떨까요?"}
+      ],
+      "success_message": "정말 멋진 대답이에요! 친구가 마음을 알아준다고 느껴서 울컥했던 마음이 풀릴 거예요."
+    }
+  },
+
+  "부끄러움": {
+    "situation": "교실",
+    "learned_expression": "얼굴이 화끈거린다",
+    "step1": {
+      "expression": "얼굴이 화끈거린다",
+      "body_sensation": "볼이 뜨겁게 달아오르고 고개를 들기가 어려운 느낌이 들어요.",
+      "situation_example": "친구들 앞에서 발표하다가 말이 꼬였을 때 이런 마음이 들 수 있어요."
+    },
+    "step2": {
+      "visual_clue": "볼이 빨갛게 달아오르고 눈을 아래로 내리깔고 있어요.",
+      "choices": [
+        {"id": "A", "text": "부끄러움", "is_correct": true, "feedback": "맞아요! 볼이 빨개지고 눈을 아래로 내리깔고 있는 걸 보면 많이 부끄러운 마음이 느껴져요."},
+        {"id": "B", "text": "불안", "is_correct": false, "feedback": "불안할 때는 걱정이 많아서 몸이 긴장되는 느낌이 들어요. 이 친구는 볼이 빨갛게 달아올라 있어서 부끄러움에 더 가까워요."},
+        {"id": "C", "text": "속상함", "is_correct": false, "feedback": "속상할 때는 눈물이 올라오는 느낌이 들어요. 이 친구는 눈물보다 볼이 뜨겁게 달아올라 있어서 부끄러움에 더 가까워요."}
+      ]
+    },
+    "step3": {
+      "background": "school classroom",
+      "comic": [
+        {"cut": 1, "text": "민이는 친구들 앞에서 발표를 했어요."},
+        {"cut": 2, "text": "발표하다가 말이 갑자기 꼬여버렸어요."},
+        {"cut": 3, "text": "민이는 볼이 화끈 달아올랐어요."}
+      ],
+      "choices": [
+        {"id": "A", "text": "발표하다가 친구들 앞에서 말이 꼬였어요.", "is_correct": true, "feedback": "맞아요! 친구들이 보는 앞에서 말이 꼬여서 민이는 얼굴이 화끈거렸어요."},
+        {"id": "B", "text": "친구들이 민이 발표를 칭찬해 줬어요.", "is_correct": false, "feedback": "칭찬을 받으면 기쁜 마음이 들 거예요. 두 번째 그림을 다시 보면 도움이 돼요."},
+        {"id": "C", "text": "민이가 발표를 하지 않았어요.", "is_correct": false, "feedback": "민이는 발표를 했어요. 첫 번째 그림부터 다시 보면 어떤 일이 있었는지 알 수 있어요."}
+      ]
+    },
+    "step4": {
+      "leo_intro": "맞아요! 발표하다가 말이 꼬여서 민이는 부끄러움을 느꼈어요. 이럴 때 친구는 뭐라고 말해줄까요?",
+      "choices": [
+        {"id": "A", "text": "괜찮아, 나도 발표할 때 떨린걸. 발표하느라 정말 수고많았어!", "type": "empathetic", "is_correct": true, "feedback": "정말 따뜻한 말이에요! 나도 그런 적 있다고 말해주면 민이가 혼자가 아니라는 느낌이 들 거예요."},
+        {"id": "B", "text": "왜 그랬어? 연습 안 했어?", "type": "indifferent", "is_correct": false, "feedback": "그 말은 민이를 더 부끄럽게 만들 수 있어요. 먼저 민이의 마음을 알아주는 말이 필요해요."},
+        {"id": "C", "text": "나 오늘 체육 시간이 기다려져.", "type": "irrelevant", "is_correct": false, "feedback": "그 말은 지금 상황과 조금 달라요. 민이의 부끄러운 마음을 먼저 봐주면 어떨까요?"}
+      ],
+      "success_message": "정말 멋진 대답이에요! 친구가 마음을 알아준 덕분에 민이의 화끈거리던 마음이 조금 식을 거예요."
+    }
+  },
+
+  "실망": {
+    "situation": "학교 교실",
+    "learned_expression": "김이 샌다",
+    "step1": {
+      "expression": "김이 샌다",
+      "body_sensation": "기대했던 마음이 풍선에서 바람이 빠지듯 스르르 사라지는 느낌이 들어요.",
+      "situation_example": "친구가 같이 놀기로 약속했는데 깜빡하고 다른 친구랑 가버렸을 때 이런 마음이 들 수 있어요."
+    },
+    "step2": {
+      "visual_clue": "눈빛이 흐려지고 입꼬리가 힘없이 내려가 있어요.",
+      "choices": [
+        {"id": "A", "text": "실망", "is_correct": true, "feedback": "맞아요! 눈빛이 흐려지고 표정에 힘이 빠진 걸 보면 기대했던 마음이 스르르 빠져나간 실망한 상태예요."},
+        {"id": "B", "text": "속상함", "is_correct": false, "feedback": "속상할 때는 눈물이 올라오고 마음이 꽉 막히는 느낌이 들어요. 이 친구는 눈물보다 기운이 쭉 빠진 모습이라 실망에 더 가까워요."},
+        {"id": "C", "text": "불안", "is_correct": false, "feedback": "불안할 때는 걱정이 많아서 몸이 긴장되는 느낌이 들어요. 이 친구는 긴장보다 힘이 빠진 모습이라 실망에 더 가까워요."}
+      ]
+    },
+    "step3": {
+      "background": "school classroom",
+      "comic": [
+        {"cut": 1, "text": "민이는 준이와 같이 놀기로 약속했어요."},
+        {"cut": 2, "text": "준이가 약속을 잊고 다른 친구와 가버렸어요."},
+        {"cut": 3, "text": "민이는 기대했던 마음이 스르르 빠졌어요."}
+      ],
+      "choices": [
+        {"id": "A", "text": "준이가 약속을 잊고 다른 친구와 가버렸어요.", "is_correct": true, "feedback": "맞아요! 기대하고 기다렸는데 준이가 약속을 잊어서 민이는 김이 샜어요."},
+        {"id": "B", "text": "준이가 민이와 약속 장소에서 기다렸어요.", "is_correct": false, "feedback": "약속 장소에서 기다려줬다면 기쁜 마음이 들었을 거예요. 두 번째 그림을 다시 보면 도움이 돼요."},
+        {"id": "C", "text": "민이가 먼저 다른 곳에 가버렸어요.", "is_correct": false, "feedback": "민이는 약속을 기억하고 기다렸어요. 두 번째 그림을 다시 보면 어떤 일이 있었는지 알 수 있어요."}
+      ]
+    },
+    "step4": {
+      "leo_intro": "맞아요! 준이가 약속을 잊고 가버려서 민이는 실망을 느꼈어요. 준이라면 민이에게 뭐라고 말해줄까요?",
+      "choices": [
+        {"id": "A", "text": "약속 잊어서 진짜 미안해. 기다렸을 텐데 속상했겠다. 다음에 절대 잊지 않을게!", "type": "empathetic", "is_correct": true, "feedback": "정말 잘했어요! 뭘 잘못했는지 말하고, 민이 마음을 먼저 알아준 다음, 다음엔 꼭 지키겠다고 약속했어요. 이런 말이 진짜 사과예요."},
+        {"id": "B", "text": "다음에 놀면 되잖아, 별거 아니야.", "type": "indifferent", "is_correct": false, "feedback": "다음에 놀 수도 있지만, 먼저 약속을 잊은 것에 미안하다고 말해주는 게 필요해요."},
+        {"id": "C", "text": "어, 나 그거 깜빡했어. 뭐 어때~", "type": "irrelevant", "is_correct": false, "feedback": "깜빡한 건 알겠는데, '뭐 어때~' 라는 말은 민이 마음을 가볍게 여기는 것처럼 들릴 수 있어요. 민이가 어떤 기분이었을지 먼저 생각해봐요."}
+      ],
+      "success_message": "정말 멋진 대답이에요! 잘못을 인정하고 기다린 마음을 알아준 다음 앞으로의 약속까지, 이 세 가지가 모두 담긴 말이 진짜 따뜻한 사과예요."
+    }
+  },
+
+  "고마움": {
+    "situation": "학교 급식실",
+    "learned_expression": "가슴이 뭉클하다",
+    "step1": {
+      "expression": "가슴이 뭉클하다",
+      "body_sensation": "가슴 한가운데가 따뜻하게 꽉 차오르는 느낌이 들어요.",
+      "situation_example": "힘든 날 친구가 나를 위로해줄 때 이런 마음이 들 수 있어요."
+    },
+    "step2": {
+      "visual_clue": "눈이 살짝 촉촉해지고 입꼬리가 부드럽게 올라가 있어요.",
+      "choices": [
+        {"id": "A", "text": "고마움", "is_correct": true, "feedback": "맞아요! 눈이 촉촉해지고 표정이 부드럽게 풀린 걸 보면 가슴이 따뜻하게 차오른 고마운 마음이 느껴져요."},
+        {"id": "B", "text": "기쁨", "is_correct": false, "feedback": "기쁠 때는 눈이 반짝반짝 빛나고 몸이 들뜨는 느낌이 들어요. 이 친구는 들뜨기보다 마음이 따뜻하게 가라앉는 고마움에 더 가까워요."},
+        {"id": "C", "text": "속상함", "is_correct": false, "feedback": "속상할 때는 눈물이 올라오고 마음이 꽉 막히는 느낌이 들어요. 이 친구는 막힌 게 아니라 따뜻하게 채워지는 고마움에 더 가까워요."}
+      ]
+    },
+    "step3": {
+      "background": "school cafeteria",
+      "comic": [
+        {"cut": 1, "text": "민이는 급식을 받다가 반찬을 쏟았어요."},
+        {"cut": 2, "text": "준이가 말없이 휴지를 가져다줬어요."},
+        {"cut": 3, "text": "민이는 가슴이 따뜻하게 차올랐어요."}
+      ],
+      "choices": [
+        {"id": "A", "text": "준이가 휴지를 가져다줬어요.", "is_correct": true, "feedback": "맞아요! 도와준 준이 덕분에 민이는 가슴이 뭉클했어요."},
+        {"id": "B", "text": "준이가 민이가 쏟은 걸 보고 웃었어요.", "is_correct": false, "feedback": "친구가 웃으면 더 부끄러운 마음이 들 수 있어요. 두 번째 그림을 다시 보면 도움이 돼요."},
+        {"id": "C", "text": "민이 혼자 반찬을 다 치웠어요.", "is_correct": false, "feedback": "민이 혼자만의 이야기가 아니에요. 두 번째 그림에서 어떤 일이 있었는지 다시 볼까요?"}
+      ]
+    },
+    "step4": {
+      "leo_intro": "맞아요! 준이가 휴지를 가져다줘서 민이는 고마움을 느꼈어요. 민이라면 준이에게 뭐라고 말해줄까요?",
+      "choices": [
+        {"id": "A", "text": "고마워! 너가 도와줘서 정말 기뻤어.", "type": "empathetic", "is_correct": true, "feedback": "정말 잘했어요! 고맙다는 말에 왜 고마운지까지 말해주면 준이도 도와주길 잘했다는 마음이 들 거예요."},
+        {"id": "B", "text": "어, 알았어.", "type": "indifferent", "is_correct": false, "feedback": "준이가 도와줬는데 고맙다는 말이 없으면 준이가 서운할 수 있어요. 마음을 표현해주면 어떨까요?"},
+        {"id": "C", "text": "나 오늘 급식 맛없었어.", "type": "irrelevant", "is_correct": false, "feedback": "그 말은 지금 상황과 조금 달라요. 준이가 도와준 마음에 먼저 고맙다고 말해주면 어떨까요?"}
+      ],
+      "success_message": "정말 멋진 대답이에요! 고마운 마음을 말로 표현하면 준이도 가슴이 뭉클해질 거예요."
+    }
+  }
+}
