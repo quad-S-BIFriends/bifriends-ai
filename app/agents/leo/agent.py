@@ -12,7 +12,7 @@ Leo 에이전트 정의 (LlmAgent).
   (이 구조는 캐싱을 켰을 때 고정/동적 경계가 맞아떨어지도록 미리 잡아둔 것)
 
 도구: math_help, korean_help, create_todo
-모델: Gemini 2.0 Flash
+모델: Gemini 2.5 계열
 """
 from __future__ import annotations
 
@@ -23,6 +23,7 @@ from google.adk.agents import LlmAgent
 from app.agents.leo.tools.math_tool import math_help
 from app.agents.leo.tools.korean_tool import korean_help
 from app.agents.leo.tools.todo_tool import create_todo
+from app.core.config import settings
 
 _PROMPTS_DIR = Path(__file__).parent.parent.parent / "prompts"
 _STATIC_PATH = _PROMPTS_DIR / "leo_agent.txt"
@@ -34,7 +35,7 @@ _dynamic_text = _DYNAMIC_PATH.read_text(encoding="utf-8")
 
 leo_agent = LlmAgent(
     name="leo",
-    model="gemini-2.0-flash",
+    model=settings.model_chat,
     static_instruction=_static_text,
     instruction=_dynamic_text,
     tools=[math_help, korean_help, create_todo],

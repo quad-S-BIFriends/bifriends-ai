@@ -211,7 +211,7 @@ bifriends-ai/
 ## 시작하기
 
 ```bash
-# 1. 환경변수 설정
+# 1. 환경변수 설정 
 cp .env.example .env
 # .env 파일에서 GOOGLE_API_KEY, INTERNAL_SERVICE_TOKEN 입력
 

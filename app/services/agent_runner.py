@@ -40,7 +40,7 @@ _PER_TURN_KEYS = (STATE_MATH_CTA, STATE_KOREAN_CTA, STATE_TODOS_CREATED)
 _TITLE_PROMPT = (
     Path(__file__).parent.parent / "prompts" / "title_gen.txt"
 ).read_text(encoding="utf-8")
-_TITLE_MODEL = "gemini-3-flash-lite"
+_TITLE_MODEL = settings.model_title 
 
 
 class AgentRunner:
@@ -138,7 +138,7 @@ class AgentRunner:
         실패 시 예외를 그대로 올리므로 호출부에서 처리한다.
         """
         resp = await self._genai.aio.models.generate_content(
-            model=model,
+            model=model or settings.model_summary,
             contents=prompt,
         )
         return (resp.text or "").strip()

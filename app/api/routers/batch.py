@@ -33,6 +33,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from app.schemas.batch import WeeklySafetyResult
+from app.core.config import settings
 from app.services import safety_analyzer
 from app.services.agent_runner import agent_runner
 from app.services.be_client import be_client
@@ -40,7 +41,7 @@ from app.services.be_client import be_client
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/batch", tags=["batch"])
 
-_REASON_MODEL = "gemini-2.0-flash"
+_REASON_MODEL = settings.model_summary
 _REASON_PROMPT = (
     Path(__file__).parent.parent.parent / "prompts" / "safety_analyzer.txt"
 ).read_text(encoding="utf-8")
