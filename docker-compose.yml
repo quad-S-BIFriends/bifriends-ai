@@ -13,8 +13,8 @@ services:
       APP_PORT: 8001
     restart: unless-stopped
     networks:
-      - bifriends-be-default
+      - bifriends-be_default
 
 networks:
-  bifriends-be-default:
+  bifriends-be_default:
     external: true
