@@ -1,5 +1,5 @@
 """
-친구랑(SEL) 콘텐츠 생성 스키마.
+친구랑(EMO) 콘텐츠 생성 스키마.
 
 설계 메모
 - step1~4 구조는 생성 규격 문서(Step별 JSON 규격)를 그대로 따른다.
@@ -111,7 +111,7 @@ class Step2(BaseModel):
     question: str = "이 친구는 어떤 기분일까요?"
     choices: list[Choice]
     image_url: Optional[str] = None   # 감정별 고정 폴백(얼굴 클로즈업). AI가 채움.
-    retry_message: str = "친구의 표정을 다시 한 번 봐볼까?"
+    retry_message: str = "다시 한 번 골라볼까요?"
     next_button_text: str = "이 마음일 것 같아!"   # 확정 문구 (명세 EMO-11 일치)
 
 
@@ -121,7 +121,7 @@ class Step3(BaseModel):
     comic: list[ComicCut]             # 정확히 3컷
     question: str = "어떤 일이 있어서 이런 기분이 들었을까요?"
     choices: list[Choice]
-    retry_message: str = "만화에서 상황을 그려보구 다시 골라볼까?"
+    retry_message: str = "그림을 다시 보고 골라볼까요?"
     next_button_text: str = "다음 이야기 보기"
 
 
@@ -131,7 +131,7 @@ class Step4(BaseModel):
     leo_intro: str
     question: str = "친구에게 어떤 말을 해주면 좋을까요?"
     choices: list[Step4Choice]
-    retry_message: str = "친구 마음을 생각하면서 다시 골라볼까?"
+    retry_message: str = "친구 마음을 생각하면서 다시 골라볼까요?"
     success_message: str
     reward: Reward = Field(default_factory=Reward)
     complete_button_text: str = "친구 마음 알아보기 완료!"
