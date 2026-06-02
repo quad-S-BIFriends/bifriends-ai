@@ -180,13 +180,16 @@ def build_full_fallback(emotion: Emotion) -> ScenarioResponse:
     from app.services.content_fallback import get_fallback_text, get_step3_fallback_urls
 
     text = get_fallback_text(emotion)
-    step3_prompts = build_step3_prompts(emotion, text["step3"])
+    # 폴백은 step3 이미지를 실시간 생성하지 않으므로 image_prompt(scene 조립)가 불필요.
+    # 컷 수만큼 빈 prompt 자리만 둔다(기록용 필드 유지).
+    cut_count = len(text["step3"]["comic"])
+    step3_prompts = [""] * cut_count
 
     resp = assemble_response(
         emotion=emotion,
         text=text,
         step3_prompts=step3_prompts,
-        step3_images_b64=[None, None, None],
+        step3_images_b64=[None] * cut_count,
         is_fallback=True,
     )
     # 폴백 step3 컷 이미지는 고정 URL을 image_url에 주입

@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import base64
 
 from google import genai
 from google.adk.runners import Runner
@@ -41,6 +42,16 @@ _TITLE_PROMPT = (
     Path(__file__).parent.parent / "prompts" / "title_gen.txt"
 ).read_text(encoding="utf-8")
 _TITLE_MODEL = settings.model_title 
+
+_ANCHOR_DIR = Path(__file__).parent.parent / "assets" / "anchors"
+_ANCHOR_PATH = {
+    "boy": _ANCHOR_DIR / "boy.png",
+    "girl": _ANCHOR_DIR / "girl.png",
+}
+
+_EMO_SCENARIO_PROMPT = (
+    Path(__file__).parent.parent / "prompts" / "content_scenario.txt"
+).read_text(encoding="utf-8")
 
 
 class AgentRunner:
@@ -170,5 +181,117 @@ class AgentRunner:
         if title:
             await be_client.patch_session_title(req.session_id, title)
 
-
+    async def generate_emo_scenario_text(
+        self,
+        *,
+        emotion: str,
+        nickname: str,
+        interests: list[str],
+        learned_expressions: list[str],
+    ) -> str:
+        """
+        친구랑 시나리오 '텍스트'를 1회성으로 생성 (JSON 문자열 반환).
+        ADK 대화 세션과 무관 — generate_text 와 동일 계열.
+        content_scenario.txt 를 시스템 지시로, 입력을 사용자 메시지로 전달.
+        모델: settings.model_scenario (구조화 JSON용).
+        """
+        from app.core.config import settings  # 지연 import (예시 파일 기준)
+ 
+        user_input = (
+            f"emotion(감정): {emotion}\n"
+            f"nickname(아이 이름): {nickname}\n"
+            f"interests(관심사): {', '.join(interests) if interests else '없음'}\n"
+            f"learned_expressions(이미 배운 표현): "
+            f"{', '.join(learned_expressions) if learned_expressions else '없음'}\n"
+            f"위 조건으로 4단계 감정 학습 세트를 생성해줘. 순수 JSON만 출력."
+        )
+        resp = await self._genai.aio.models.generate_content(
+            model=settings.model_scenario,
+            contents=[
+                types.Content(role="user", parts=[
+                    types.Part(text=_EMO_SCENARIO_PROMPT),
+                    types.Part(text=user_input),
+                ]),
+            ],
+        )
+        return (resp.text or "").strip()
+ 
+    async def generate_emo_images(
+        self,
+        *,
+        anchor_instruction: str,
+        prompts: list[str],
+        gender: str,
+    ) -> list[str | None]:
+        """
+        step3 3컷 이미지를 멀티턴으로 순차 생성 → base64 리스트 반환.
+        - 첫 컷: 앵커 이미지(boy/girl) + anchor_instruction + prompts[0]
+        - 이후 컷: 직전 생성 이미지를 contents에 포함해 캐릭터/배경 일관성 유지
+        - 1:1 은 image_config 로 강제.
+        실패(빈 응답/차단) 시 해당 컷은 None → 호출부(content_builder)가 폴백 처리.
+        """
+        from app.core.config import settings
+ 
+        # 앵커 이미지 바이트 로드
+        anchor_path = _ANCHOR_PATH[gender]
+        anchor_bytes = anchor_path.read_bytes()
+        anchor_part = types.Part.from_bytes(data=anchor_bytes, mime_type="image/png")
+ 
+        cfg = types.GenerateContentConfig(
+            response_modalities=["IMAGE"],
+            image_config=types.ImageConfig(aspect_ratio="1:1"),
+        )
+ 
+        results: list[str | None] = []
+        prev_image_part = None  # 직전 컷 이미지(일관성용)
+ 
+        for i, prompt in enumerate(prompts):
+            # contents 조립: 첫 컷은 앵커, 이후 컷은 직전 이미지 + 앵커지시 동봉
+            parts: list = []
+            if i == 0:
+                parts.append(types.Part(text=anchor_instruction))
+                parts.append(anchor_part)
+            else:
+                # 직전 컷 이미지를 참조로 (드리프트 방지)
+                if prev_image_part is not None:
+                    parts.append(prev_image_part)
+                parts.append(anchor_part)  # 앵커도 계속 동봉(외형 고정 강화)
+            parts.append(types.Part(text=prompt))
+ 
+            try:
+                resp = await self._genai.aio.models.generate_content(
+                    model=settings.model_image,
+                    contents=[types.Content(role="user", parts=parts)],
+                    config=cfg,
+                )
+                b64 = self._extract_image_b64(resp)
+            except Exception:
+                b64 = None
+ 
+            results.append(b64)
+            if b64 is not None:
+                prev_image_part = types.Part.from_bytes(
+                    data=base64.b64decode(b64), mime_type="image/png"
+                )
+            else:
+                prev_image_part = None  # 실패 컷은 참조 끊김
+ 
+        return results
+ 
+    @staticmethod
+    def _extract_image_b64(resp) -> str | None:
+        """genai 응답에서 첫 이미지 inline_data(base64) 추출. 없으면 None."""
+        try:
+            for part in resp.candidates[0].content.parts:
+                inline = getattr(part, "inline_data", None)
+                if inline and getattr(inline, "data", None):
+                    data = inline.data
+                    # SDK가 bytes로 줄 수도, str(base64)로 줄 수도 있음 → 표준화
+                    if isinstance(data, bytes):
+                        return base64.b64encode(data).decode("ascii")
+                    return data  # 이미 base64 문자열
+        except (AttributeError, IndexError):
+            pass
+        return None
+ 
 agent_runner = AgentRunner()
