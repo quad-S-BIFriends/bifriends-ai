@@ -23,25 +23,25 @@ EMOTION_GENDER: dict[Emotion, str] = {
     Emotion.DISAPPOINTED: "girl",
     Emotion.GRATEFUL: "girl",
 }
-
+ 
 # ---- 캐릭터 시트 (앵커 이미지와 동일한 외형 기술) --------------------------
 MAIN_CHARACTER: dict[str, str] = {
     "boy": (
         "the main character is a boy with short dark brown hair, wearing a light "
-        "blue hoodie, dark navy pants,white socks, white sneakers"
+        "blue hoodie, dark navy pants, white sneakers"
     ),
     "girl": (
         "the main character is a girl with long brown hair and small pink ribbons, "
         "wearing a yellow t-shirt, light blue skirt, white socks, white sneakers"
     ),
 }
-
+ 
 # 핵심 조연(친구) 외형. 한 세트 내내 동일. 군중은 외형 고정 안 하고 generic 처리.
 FRIEND_CHARACTER = (
     "the friend character has a black bob with a blue hairband, "
     "a green t-shirt and a purple skirt"
 )
-
+ 
 # ---- 공통 꼬리표 ----------------------------------------------------------
 STYLE_TAIL = (
     "Soft flat children's storybook illustration, clean rounded outlines, "
@@ -53,18 +53,18 @@ CONSISTENCY_TAIL = (
     "reference/previous image."
 )
 ASPECT = "Square 1:1 aspect ratio."
-
+ 
 # step1·2 전용: 흰 배경 고정
 WHITE_BG = "Plain solid white background, centered composition."
-
+ 
 # step3 전용: 흰 테두리 방지 full-bleed
 def fullbleed(background: str) -> str:
     return (
         f"Full-bleed composition, the {background} fills the entire frame "
         f"with no white borders or margins, edge-to-edge background."
     )
-
-
+ 
+ 
 def assemble_step3_prompt(
     *,
     gender: str,
@@ -75,7 +75,7 @@ def assemble_step3_prompt(
 ) -> str:
     """
     step3 한 컷의 최종 image_prompt 조립.
-
+ 
     gender        : "boy" | "girl"
     scene         : LLM이 생성한 이 컷의 행동/표정/구도 묘사(영문)
     cut           : 1 | 2 | 3 (컷1은 배경 명시, 컷2·3은 same)
@@ -85,22 +85,22 @@ def assemble_step3_prompt(
     parts: list[str] = [MAIN_CHARACTER[gender]]
     if include_friend:
         parts.append(FRIEND_CHARACTER)
-
+ 
     parts.append(scene)
-
+ 
     if cut == 1:
         parts.append(f"Background: a simple {background}.")
         parts.append(fullbleed(background))
     else:
         parts.append(f"Same {background} background as the previous image.")
         parts.append(fullbleed(background))
-
+ 
     parts.append(CONSISTENCY_TAIL)
     parts.append(STYLE_TAIL)
     parts.append(ASPECT)
     return " ".join(parts)
-
-
+ 
+ 
 def assemble_anchor_instruction(gender: str) -> str:
     """
     step3 첫 컷 생성 시 앵커 이미지와 함께 주는 캐릭터 고정 지시.
