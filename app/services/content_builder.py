@@ -65,6 +65,25 @@ def build_step3_prompts(emotion: Emotion, step3_text: dict) -> list[str]:
 
 # ---- 4) 응답 조립 (순수 코드, 고정값 주입) ---------------------------------
 
+_VALID_STEP4_TYPES = {"empathetic", "indifferent", "irrelevant"}
+
+
+def _coerce_step4_choice(c: dict) -> dict:
+    """
+    LLM이 step4 choice의 type을 허용 외 값(예: 'pressuring')으로 줄 때 방어.
+    - is_correct=True  → 정답은 항상 공감(empathetic)
+    - is_correct=False 이고 허용 외 type → 'indifferent'로 안전 보정
+    (정상적으로 허용된 값이면 그대로 둔다.)
+    """
+    c = dict(c)
+    t = c.get("type")
+    if c.get("is_correct"):
+        c["type"] = "empathetic"
+    elif t not in _VALID_STEP4_TYPES:
+        c["type"] = "indifferent"
+    return c
+
+
 def assemble_response(
     *,
     emotion: Emotion,
@@ -103,7 +122,7 @@ def assemble_response(
     )
     s4 = Step4(
         leo_intro=text["step4"]["leo_intro"],
-        choices=[Step4Choice(**c) for c in text["step4"]["choices"]],
+        choices=[Step4Choice(**_coerce_step4_choice(c)) for c in text["step4"]["choices"]],
         success_message=text["step4"]["success_message"],
         reward=Reward(),  # 고정값
     )
