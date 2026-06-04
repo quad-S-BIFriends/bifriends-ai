@@ -8,8 +8,6 @@
     * step3 3컷 → 실시간 생성. AI가 image_b64(base64)로 채워서 응답 → BE가 GCS 업로드 후 URL 치환.
 - 버튼 문구/타입/리워드 등 LLM이 만지면 안 되는 고정값은 코드가 결정론적으로 채운다(스키마는 그 자리만 제공).
 - emotion 값은 한국어 6개 Pool 고정. image_prompt 텍스트만 영어.
-
-미정(BE 회신 대기): 최종 URL을 FE로 내려줄 때의 필드명(image_url로 가정).
 """
 
 from enum import Enum
