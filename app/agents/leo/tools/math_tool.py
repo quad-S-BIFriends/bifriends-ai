@@ -37,8 +37,13 @@ STATE_MATH_CONCEPTS = "math_concepts"
 STATE_MATH_CTA = "math_cta"
 
 
+_OUT_OF_CURRICULUM_SENTINEL = "모름"
+
+
 def _is_known_concept(concept: str, concepts: list[dict]) -> bool:
-    """LLM이 고른 concept이 실제 캐싱된 목록에 있는지 검증."""
+    """LLM이 고른 concept이 실제 캐싱된 목록에 있는지 검증. sentinel "모름"은 항상 False."""
+    if concept == _OUT_OF_CURRICULUM_SENTINEL:
+        return False
     return any(c.get("concept") == concept for c in concepts)
 
 
