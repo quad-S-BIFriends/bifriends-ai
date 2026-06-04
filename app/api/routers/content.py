@@ -7,25 +7,18 @@ text_generator / image_generator 는 의존성으로 주입.
 - image_generator: Gemini 이미지 모델 클라이언트 (step3 멀티턴 생성)
 실제 구현은 services 측에서 연결하며, 여기서는 호출 흐름만 고정.
 """
- 
+
 import logging
 from fastapi import APIRouter
- 
+
 from app.schemas.content import ScenarioRequest, ScenarioResponse
 from app.services.content_builder import build_scenario
 from app.services.agent_runner import agent_runner
- 
+
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/content", tags=["content"])
- 
- 
-def _pick_emotion(learned_expressions: list[str]):
-    # 간단 선택: 학습한 표현 수 기반 회전. 운영에서 정교화 가능.
-    from app.schemas.content import Emotion
-    pool = list(Emotion)
-    return pool[len(learned_expressions) % len(pool)]
- 
- 
+
+
 @router.post("/scenario", response_model=ScenarioResponse)
 async def create_scenario(req: ScenarioRequest) -> ScenarioResponse:
     """친구랑 4단계 학습 세트 생성. step1·2는 고정 폴백 URL, step3 3컷은 실시간 생성."""
@@ -33,5 +26,4 @@ async def create_scenario(req: ScenarioRequest) -> ScenarioResponse:
         req,
         text_generator=agent_runner.generate_emo_scenario_text,
         image_generator=agent_runner.generate_emo_images,
-        pick_emotion=_pick_emotion,
     )

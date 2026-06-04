@@ -46,7 +46,7 @@ class ScenarioRequest(BaseModel):
     nickname: str
     interests: list[str] = Field(default_factory=list)
     learned_expressions: list[str] = Field(default_factory=list)
-    emotion: Optional[Emotion] = None  # 미지정 시 코드가 선택
+    emotion: Emotion
 
 
 # ---- 공통 하위 구조 --------------------------------------------------------

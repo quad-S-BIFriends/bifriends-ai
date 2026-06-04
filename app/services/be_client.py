@@ -6,8 +6,8 @@ BE(Spring) API 호출 클라이언트.
 - memberId 전달 방식은 _member_params() 한 곳에 격리.
   → BE 팀 확인 후 query param / header 중 무엇이든 이 메서드만 수정하면 됨.
 
-NOTE(회의 확인 필요): 내부 API(math/concepts, lesson-status, korean/current)가
-memberId를 어떻게 받는지 미확정. 현재는 query param ?memberId={id} 로 가정.
+NOTE: 내부 API(math/concepts, lesson-status, korean/current)가
+memberId를 어떻게 받는지 미확정. 현재는 query param ?memberId={id} 로 확정
 """
 from __future__ import annotations
 import httpx

@@ -143,10 +143,9 @@ async def build_scenario(
     *,
     text_generator,   # async (prompt_vars) -> raw_json_str  (호출1, agent_runner 위임)
     image_generator,  # async (anchor_instr, prompts, gender) -> list[b64|None] (호출2)
-    pick_emotion,     # (learned) -> Emotion  (중복 회피 선택; 코드/간단 로직)
 ) -> ScenarioResponse:
     """전체 흐름. 각 단계 실패 시 full fallback으로 안전 복귀."""
-    emotion = req.emotion or pick_emotion(req.learned_expressions)
+    emotion = req.emotion
 
     try:
         # 1) 텍스트 생성 (호출1)
