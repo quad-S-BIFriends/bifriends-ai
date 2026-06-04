@@ -1,5 +1,5 @@
 """
-친구랑(SEL) 시나리오 빌더 — 오케스트레이션.
+친구랑(EMO) 시나리오 빌더 — 오케스트레이션.
 
 분업 흐름 (각 단계가 한 가지 일만):
   1) generate_scenario_text()   : 호출1. 텍스트 LLM이 텍스트 + step3 scene/cast만 생성 (JSON).
@@ -179,7 +179,7 @@ async def build_scenario(
         )
 
     except Exception as e:
-        logger.warning("SEL scenario generation failed (%s); using full fallback", e)
+        logger.warning("EMO scenario generation failed (%s); using full fallback", e)
         return build_full_fallback(emotion)
 
 
