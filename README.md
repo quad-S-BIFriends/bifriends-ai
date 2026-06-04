@@ -1,9 +1,10 @@
 # bifriends-ai
 
 경계선 지능 아동(8~12세)이 공부와 감정 표현을 각자의 속도로 매일 연습하고, 그 성장을 부모와 함께 보는 앱
+
 **Python · FastAPI · Google ADK · Gemini 2.5**
 
----
+
 
 ## 아키텍처
 
@@ -17,7 +18,7 @@ FastAPI AI (Python) :8001
 Gemini 2.5 Flash / Flash-Image
 ```
 
----
+
 
 ## API 엔드포인트
 
@@ -26,7 +27,7 @@ Gemini 2.5 Flash / Flash-Image
 | `POST /api/v1/ai/chat` | BE | 레오 채팅 에이전트 — 학습 안내·할 일·말동무 |
 | `POST /api/v1/ai/batch/weekly-safety` | BE 스케줄러 | 주간 안전 신호 분석 → GREEN/YELLOW/RED 판정 |
 | `POST /api/v1/ai/report/weekly` | BE 스케줄러 | 부모 성장 리포트 4개 섹션 생성 |
-| `POST /api/v1/ai/content/scenario` | BE | SEL 감정 학습 시나리오 + 이미지 3컷 생성 |
+| `POST /api/v1/ai/content/scenario` | BE | EMO 감정 학습 시나리오 + 이미지 3컷 생성 |
 | `GET  /health` | 인프라 | 헬스체크 |
 
 **🤎 레오 채팅** — Google ADK 기반 대화 에이전트. 아이 메시지에서 인텐트(수학·국어 공부, 할 일 등록, 말동무)를 판단하고, 학습 CTA는 BE 데이터 기반으로 코드에서 결정론적으로 조립한다.
@@ -37,7 +38,7 @@ Gemini 2.5 Flash / Flash-Image
 
 **🤎 친구랑 EMO 콘텐츠** — 감정별 4단계 학습 세트를 생성한다. 텍스트 생성(Gemini) → step3 이미지 3컷(멀티턴, 이전 컷을 context에 포함해 캐릭터 일관성 유지) 순으로 실행하며, 생성 실패 시 폴백 시나리오로 자동 대체한다.
 
----
+
 
 ### 채팅 응답 구조
 
@@ -70,7 +71,6 @@ Gemini 2.5 Flash / Flash-Image
 0–3 → GREEN (Gemini 호출 없음) · 4–7 → YELLOW · 8+ → RED  
 자해·자살 표현은 점수와 무관하게 **코드에서 즉시 RED 강제**
 
----
 
 ## 시작하기
 
