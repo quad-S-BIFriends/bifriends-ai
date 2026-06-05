@@ -34,6 +34,6 @@ class TodoCreated(BaseModel):
 
 # AI -> BE 응답
 class ChatResponse(BaseModel):
-    message: str
+    reply: str
     cta: Optional[Union[StepCTA, SubjectCTA]] = None
     todos_created: Optional[list[TodoCreated]] = None
