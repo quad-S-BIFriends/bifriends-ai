@@ -13,12 +13,12 @@ BE API 호출은 unittest.mock으로 대체한다.
     - todos_created is not None       → create_todo 호출됨
     - cta is None and todos_created is None → 도구 없음 (일반 대화)
 """
-import os
 import uuid
 import pytest
 import pytest_asyncio
 from unittest.mock import AsyncMock, patch
 
+from app.core.config import settings
 from app.schemas.chat import ChatRequest
 from app.services.agent_runner import AgentRunner
 from app.services import be_client as be_client_module
@@ -35,16 +35,12 @@ _KOREAN_LESSON = {"stepTitle": "낱말 익히기", "concept": "어휘"}
 _TODO_RESP = {"title": "테스트 할 일", "assignedDate": "2026-06-05"}
 
 
-@pytest.fixture(scope="module")
-def api_key():
-    key = os.getenv("GOOGLE_API_KEY")
-    if not key:
-        pytest.skip("GOOGLE_API_KEY 없음 — 통합 테스트 건너뜀")
-    return key
-
-
-@pytest_asyncio.fixture(scope="module")
-async def runner(api_key):
+@pytest_asyncio.fixture
+async def runner():
+    # function-scope: 테스트마다 새 이벤트 루프에서 SQLAlchemy 엔진을 생성해
+    # "MissingGreenlet" 오류를 방지한다.
+    if not settings.google_api_key:
+        pytest.skip("GOOGLE_API_KEY 없음 — .env 파일에 설정하세요")
     r = AgentRunner()
     await r.initialize()
     yield r
@@ -118,9 +114,21 @@ class TestTodoRouting:
         assert resp.todos_created is not None
 
     async def test_숙제_언급만으로는_등록_안함(self, runner):
-        # "숙제 있어" — 등록 요청 없으므로 create_todo 호출 없어야 함
         resp = await _run(runner, "오늘 수학 숙제 있어")
         assert resp.todos_created is None
+
+    async def test_할일_의도만_있을때_먼저_물어봄(self, runner):
+        # "오늘 할 일을 적을게" — 내용 없음 → 도구 호출 없이 레오가 뭘 추가할지 물어봐야 함
+        # reply가 비어있으면 BE가 "레오가 지금 답하기 어려워요..."를 표시한다
+        resp = await _run(runner, "오늘 할 일을 적을게")
+        assert resp.reply, "reply가 비어 있으면 BE 폴백 메시지가 표시됨"
+        assert resp.todos_created is None, "내용 없이 create_todo가 호출되면 안 됨"
+
+    async def test_할일_등록_후_확인_답변_있음(self, runner):
+        # 등록 성공 후 reply가 비어 있으면 안 됨 (이벤트 루프 버그 재발 방지)
+        resp = await _run(runner, "오늘 저녁 8시에 친구들이랑 줄넘기 해야해, 할 일 추가해줘")
+        assert resp.todos_created is not None
+        assert resp.reply, "할 일 등록 후 확인 답변이 없으면 BE 폴백 메시지가 표시됨"
 
 
 @pytest.mark.asyncio

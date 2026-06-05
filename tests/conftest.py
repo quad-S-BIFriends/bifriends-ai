@@ -1,5 +1,5 @@
-import os
 import pytest
+from app.core.config import settings
 
 # 통합 테스트 마커 등록
 def pytest_configure(config):
