@@ -146,4 +146,4 @@ class TestAmbiguousRouting:
 
     async def test_응답은_항상_있음(self, runner):
         resp = await _run(runner, "안녕")
-        assert resp.message
+        assert resp.reply
