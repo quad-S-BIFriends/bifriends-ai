@@ -37,12 +37,29 @@ _TODO_RESP = {"title": "테스트 할 일", "assignedDate": "2026-06-05"}
 
 @pytest_asyncio.fixture
 async def runner():
-    # function-scope: 테스트마다 새 이벤트 루프에서 SQLAlchemy 엔진을 생성해
-    # "MissingGreenlet" 오류를 방지한다.
     if not settings.google_api_key:
         pytest.skip("GOOGLE_API_KEY 없음 — .env 파일에 설정하세요")
+
+    import os
+    from google.adk.runners import Runner
+    from google.adk.sessions import InMemorySessionService
+    from google import genai
+    from app.agents.leo.agent import leo_agent
+
+    # pydantic-settings는 .env를 settings 객체에만 로드하고 os.environ엔 쓰지 않는다.
+    # ADK Runner는 내부적으로 os.environ["GOOGLE_API_KEY"]를 직접 읽으므로 명시적으로 설정한다.
+    os.environ.setdefault("GOOGLE_API_KEY", settings.google_api_key)
+
+    # DatabaseSessionService(SQLAlchemy async) 대신 InMemorySessionService를 사용해
+    # MissingGreenlet 오류를 방지한다.
     r = AgentRunner()
-    await r.initialize()
+    r._session_service = InMemorySessionService()
+    r._runner = Runner(
+        agent=leo_agent,
+        app_name="bifriends",
+        session_service=r._session_service,
+    )
+    r._genai = genai.Client(api_key=settings.google_api_key)
     yield r
 
 
