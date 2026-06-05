@@ -23,7 +23,9 @@ Gemini API를 호출하지 않는 순수 Python 함수 테스트. CI에서 항�
 ## 통합 테스트 (Gemini API 키 필요)
 
 ```bash
-GOOGLE_API_KEY=AIza... pytest tests/test_agent_routing.py -v --integration
+GOOGLE_API_KEY=google-api-key 
+
+pytest tests/test_agent_routing.py -v --integration
 ```
 
 실제 Gemini 모델을 호출해 **LLM이 올바른 도구를 선택하는지** 검증한다.

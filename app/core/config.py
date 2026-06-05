@@ -25,8 +25,8 @@ class Settings(BaseSettings):
     model_title: str = "gemini-2.5-flash-lite" # 세션 제목 (짧고 가벼움 → 저비용)
     model_summary: str = "gemini-2.5-flash"    # 배치/리포트 요약
     model_scenario: str = "gemini-2.5-flash"   # EMO 시나리오 (구조화 JSON)
-    model_image: str = "gemini-2.5-flash-image"  # EMO 이미지 (Nano Banana )
-    #model_image: str = "gemini-3.1-flash-image"  # EMO 이미지 (Nano Banana 2)
+    #model_image: str = "gemini-2.5-flash-image"  # EMO 이미지 (Nano Banana )
+    model_image: str = "gemini-3.1-flash-image"  # EMO 이미지 (Nano Banana 2)
 
     @property
     def is_dev(self) -> bool:
