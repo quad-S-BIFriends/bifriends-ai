@@ -30,7 +30,7 @@ async def chat(req: ChatRequest) -> ChatResponse:
 
     if is_new_session:
         # 제목 자동생성은 응답을 막지 않도록 백그라운드 실행
-        asyncio.create_task(_safe_generate_title(req, response.message))
+        asyncio.create_task(_safe_generate_title(req, response.reply))
 
     return response
 

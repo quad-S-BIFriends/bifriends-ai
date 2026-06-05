@@ -126,7 +126,11 @@ class AgentRunner:
             state_delta=reset_delta,
         ):
             if event.is_final_response() and event.content and event.content.parts:
-                final_text = "".join(p.text or "" for p in event.content.parts)
+                # text 없는 파트(function_response 등)가 섞여도 실제 텍스트만 수집.
+                # 빈 문자열로 이전 텍스트를 덮어쓰는 것을 방지한다.
+                candidate = "".join(p.text for p in event.content.parts if p.text)
+                if candidate:
+                    final_text = candidate
 
         # 실행 후 state에서 CTA/todos 수거
         session = await self._session_service.get_session(
@@ -138,8 +142,8 @@ class AgentRunner:
         todos = state.get(STATE_TODOS_CREATED)
 
         return ChatResponse(
-            message=final_text,
-            cta=cta,                       # dict 그대로 (이미 검증된 CTA)
+            reply=final_text,
+            cta=cta,
             todos_created=todos or None,
         )
 
