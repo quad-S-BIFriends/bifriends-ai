@@ -71,20 +71,30 @@ def _build_math_cta(data: dict) -> StepCTA | None:
 
 async def math_help(concept: str, tool_context: ToolContext) -> dict:
     """
-    아이가 수학을 도와달라고 할 때 사용하는 도구.
+    아이가 수학 학습을 요청할 때 호출한다.
+
+    언제 호출하는가:
+      - "수학 도와줘", "덧셈/분수/곱셈 모르겠어", "수학 문제 틀렸어"처럼
+        수학 공부·개념 이해 자체가 목적일 때.
+
+    호출하지 않는 경우:
+      - "수학 문제집 풀기 할 일 추가해줘" → create_todo 사용.
+      - "수학 시험 봤어", "수학 어렵다" 같은 단순 일상 언급 → 도구 없이 공감 대화.
 
     Args:
-        concept: 반드시 'math_concepts 목록에 있는 concept 문자열 그대로'를 넘길 것.
-                 목록에 마땅한 게 없으면 가장 가까운 것을 넘기되,
-                 도구가 목록에 없다고 판단하면 채팅 안 연습문제로 안내한다.
+        concept: 아이가 묻는 수학 개념. 반드시 세션 state의 math_concepts_text에
+                 나열된 concept 문자열 중 하나를 정확히 그대로 넣어야 한다.
+                 (예: "받아올림/내림 없는 세 자리 수 덧셈과 뺄셈")
+                 목록에 딱 맞는 항목이 없으면 가장 가까운 것을 고른다.
+                 커리큘럼 밖이거나 전혀 모르겠으면 "모름"을 넣는다.
 
-    Returns:
-        말풍선 텍스트용 힌트.
-        - matched_concept: 실제로 매칭된 concept (없으면 None)
-        - lesson_status  : AVAILABLE | IN_PROGRESS | COMPLETED | LOCKED | NOT_FOUND
-        - step_title     : 안내에 쓸 스텝 이름 (없으면 None)
-        - locked_concept : LOCKED일 때 아이가 원래 물어본(잠긴) 개념 이름
-        - in_chat_practice: True면 채팅 안에서 직접 쉬운 연습문제 1개를 내야 함
+    Returns (말풍선 텍스트를 만들 때 참고할 힌트):
+        - lesson_status: AVAILABLE | IN_PROGRESS | COMPLETED → 해당 step으로 이동 가능
+                         LOCKED    → 아직 잠긴 단계, 현재 가능한 step으로 안내
+                         NOT_FOUND → 커리큘럼 밖, in_chat_practice=True로 직접 연습문제 출제
+        - in_chat_practice: True면 채팅 안에서 쉬운 연습문제 1개를 직접 내야 함
+        - step_title: 안내에 쓸 step 이름 (없으면 None)
+        - locked_concept: LOCKED일 때 아이가 물어본 개념명 — "곧 배우게 될 거야"라고 말해줄 때 사용
     """
     member_id = tool_context.state.get(STATE_MEMBER_ID)
     concepts = tool_context.state.get(STATE_MATH_CONCEPTS) or []

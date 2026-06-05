@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Optional, Union
 from pydantic import BaseModel, Field
 
 # BE -> AI 요청
@@ -26,7 +26,7 @@ class SubjectCTA(BaseModel):
     subject: Literal["korean"] = "korean"
 
 
-# 할 일 
+# 할 일
 class TodoCreated(BaseModel):
     """AI → BE 응답에 포함되는 등록 결과 (시간 정보 없음)"""
     title: str
@@ -35,5 +35,5 @@ class TodoCreated(BaseModel):
 # AI -> BE 응답
 class ChatResponse(BaseModel):
     message: str
-    cta: StepCTA | SubjectCTA | None = None
-    todos_created: list[TodoCreated] | None = None
+    cta: Optional[Union[StepCTA, SubjectCTA]] = None
+    todos_created: Optional[list[TodoCreated]] = None
