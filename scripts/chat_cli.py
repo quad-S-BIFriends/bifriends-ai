@@ -17,6 +17,7 @@ import asyncio
 import json
 import os
 import sys
+import time
 import uuid
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
@@ -91,10 +92,11 @@ def _mock_context(grade: int):
 
 def _print_response(
     reply: str,
-    cta: dict | None,
+    cta,
     todos: list | None,
     trajectory: RunTrajectory | None,
     show_trajectory: bool,
+    elapsed: float,
 ) -> None:
     if show_trajectory and trajectory and trajectory.tool_calls:
         calls = " → ".join(
@@ -103,11 +105,13 @@ def _print_response(
         )
         print(f"  \033[90m[도구] {calls}\033[0m")
 
-    print(f"\033[96m레오\033[0m: {reply}")
+    print(f"\033[96m레오\033[0m: {reply}  \033[90m({elapsed:.1f}s)\033[0m")
 
     if cta:
-        label = cta.get("label", "")
-        cta_type = cta.get("type", "")
+        # Pydantic 모델로 역직렬화됐을 수도 있으므로 dict로 통일
+        cta_dict = cta if isinstance(cta, dict) else cta.model_dump()
+        label = cta_dict.get("label", "")
+        cta_type = cta_dict.get("type", "")
         print(f"  \033[93m[버튼] {label}  ({cta_type})\033[0m")
 
     if todos:
@@ -151,12 +155,14 @@ async def run_loop(args: argparse.Namespace) -> None:
         )
 
         try:
+            t0 = time.monotonic()
             if args.real_be:
                 await be_client_module.be_client.initialize()
                 resp, traj = await runner.run_with_trajectory(req)
             else:
                 with _mock_context(args.grade):
                     resp, traj = await runner.run_with_trajectory(req)
+            elapsed = time.monotonic() - t0
         except Exception as e:
             print(f"  \033[91m[오류] {e}\033[0m\n")
             continue
@@ -167,6 +173,7 @@ async def run_loop(args: argparse.Namespace) -> None:
             todos=resp.todos_created,
             trajectory=traj,
             show_trajectory=args.trajectory,
+            elapsed=elapsed,
         )
 
 

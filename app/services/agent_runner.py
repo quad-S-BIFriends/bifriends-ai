@@ -145,18 +145,35 @@ class AgentRunner:
         message = types.Content(role="user", parts=[types.Part(text=req.message)])
 
         final_text = ""
+        _fallback_text = ""  # is_final_response 텍스트가 비면 여기서 가져옴
+
         async for event in self.runner.run_async(
             user_id=user_id,
             session_id=req.session_id,
             new_message=message,
             state_delta=reset_delta,
         ):
-            if event.is_final_response() and event.content and event.content.parts:
-                # text 없는 파트(function_response 등)가 섞여도 실제 텍스트만 수집.
-                # 빈 문자열로 이전 텍스트를 덮어쓰는 것을 방지한다.
-                candidate = "".join(p.text for p in event.content.parts if p.text)
+            if not (event.content and event.content.parts):
+                continue
+
+            # 모든 model 이벤트에서 텍스트 수집 (thought_signature 등 non-text 파트는 p.text가 None)
+            if getattr(event.content, "role", None) == "model":
+                candidate = "".join(
+                    p.text for p in event.content.parts if getattr(p, "text", None)
+                )
+                if candidate:
+                    _fallback_text = candidate  # 마지막 model 텍스트를 폴백으로 유지
+
+            # is_final_response를 선호하되, 텍스트가 없으면 폴백에서 채운다
+            if event.is_final_response():
+                candidate = "".join(
+                    p.text for p in event.content.parts if getattr(p, "text", None)
+                )
                 if candidate:
                     final_text = candidate
+
+        if not final_text:
+            final_text = _fallback_text
 
         # 실행 후 state에서 CTA/todos 수거
         session = await self._session_service.get_session(
@@ -185,6 +202,7 @@ class AgentRunner:
 
         trajectory = RunTrajectory()
         final_text = ""
+        _fallback_text = ""
 
         async for event in self.runner.run_async(
             user_id=user_id,
@@ -192,18 +210,32 @@ class AgentRunner:
             new_message=message,
             state_delta=reset_delta,
         ):
-            if event.content and event.content.parts:
-                for part in event.content.parts:
-                    fc = getattr(part, "function_call", None)
-                    if fc and getattr(fc, "name", None):
-                        trajectory.tool_calls.append(
-                            ToolCallRecord(name=fc.name, args=dict(fc.args or {}))
-                        )
+            if not (event.content and event.content.parts):
+                continue
 
-            if event.is_final_response() and event.content and event.content.parts:
-                candidate = "".join(p.text for p in event.content.parts if p.text)
+            for part in event.content.parts:
+                fc = getattr(part, "function_call", None)
+                if fc and getattr(fc, "name", None):
+                    trajectory.tool_calls.append(
+                        ToolCallRecord(name=fc.name, args=dict(fc.args or {}))
+                    )
+
+            if getattr(event.content, "role", None) == "model":
+                candidate = "".join(
+                    p.text for p in event.content.parts if getattr(p, "text", None)
+                )
+                if candidate:
+                    _fallback_text = candidate
+
+            if event.is_final_response():
+                candidate = "".join(
+                    p.text for p in event.content.parts if getattr(p, "text", None)
+                )
                 if candidate:
                     final_text = candidate
+
+        if not final_text:
+            final_text = _fallback_text
 
         session = await self._session_service.get_session(
             app_name=_APP_NAME, user_id=user_id, session_id=req.session_id
