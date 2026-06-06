@@ -16,6 +16,7 @@ ADK 1.18.0 기준:
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass, field
 from pathlib import Path
 import base64
 
@@ -33,6 +34,31 @@ from app.schemas.chat import ChatRequest, ChatResponse
 from app.services.be_client import be_client
 
 _APP_NAME = "bifriends"
+
+
+@dataclass
+class ToolCallRecord:
+    name: str
+    args: dict = field(default_factory=dict)
+
+
+@dataclass
+class RunTrajectory:
+    """한 턴에서 LLM이 호출한 도구들의 순서·인자를 기록한다."""
+    tool_calls: list[ToolCallRecord] = field(default_factory=list)
+
+    @property
+    def tool_names(self) -> list[str]:
+        return [tc.name for tc in self.tool_calls]
+
+    def called(self, tool_name: str) -> bool:
+        return tool_name in self.tool_names
+
+    def args_for(self, tool_name: str) -> dict | None:
+        for tc in self.tool_calls:
+            if tc.name == tool_name:
+                return tc.args
+        return None
 
 # 매 턴 시작 시 비워야 할 CTA/결과 state 키
 _PER_TURN_KEYS = (STATE_MATH_CTA, STATE_KOREAN_CTA, STATE_TODOS_CREATED)
@@ -146,6 +172,48 @@ class AgentRunner:
             cta=cta,
             todos_created=todos or None,
         )
+
+    async def run_with_trajectory(
+        self, req: ChatRequest
+    ) -> tuple[ChatResponse, RunTrajectory]:
+        """run()과 동일하지만 도구 호출 경로(RunTrajectory)를 함께 반환한다.
+        디버깅·테스트 전용 — 프로덕션 라우터에서는 run()을 사용한다."""
+        await self._ensure_session(req)
+        user_id = str(req.member_id)
+        reset_delta = {k: None for k in _PER_TURN_KEYS}
+        message = types.Content(role="user", parts=[types.Part(text=req.message)])
+
+        trajectory = RunTrajectory()
+        final_text = ""
+
+        async for event in self.runner.run_async(
+            user_id=user_id,
+            session_id=req.session_id,
+            new_message=message,
+            state_delta=reset_delta,
+        ):
+            if event.content and event.content.parts:
+                for part in event.content.parts:
+                    fc = getattr(part, "function_call", None)
+                    if fc and getattr(fc, "name", None):
+                        trajectory.tool_calls.append(
+                            ToolCallRecord(name=fc.name, args=dict(fc.args or {}))
+                        )
+
+            if event.is_final_response() and event.content and event.content.parts:
+                candidate = "".join(p.text for p in event.content.parts if p.text)
+                if candidate:
+                    final_text = candidate
+
+        session = await self._session_service.get_session(
+            app_name=_APP_NAME, user_id=user_id, session_id=req.session_id
+        )
+        state = session.state if session else {}
+        cta = state.get(STATE_MATH_CTA) or state.get(STATE_KOREAN_CTA)
+        todos = state.get(STATE_TODOS_CREATED)
+
+        response = ChatResponse(reply=final_text, cta=cta, todos_created=todos or None)
+        return response, trajectory
 
     async def generate_text(self, prompt: str, model: str = "gemini-2.0-flash") -> str:
         """

@@ -22,10 +22,10 @@ class Settings(BaseSettings):
     #   https://ai.google.dev/gemini-api/docs/models
     # 각 값은 .env에서 환경변수로 덮어쓸 수 있음 (예: MODEL_CHAT=gemini-2.5-pro).
     model_chat: str = "gemini-2.5-flash"       # 레오 채팅 (ADK 에이전트)
-    model_title: str = "gemini-2.5-flash-lite" # 세션 제목 (짧고 가벼움 → 저비용)
+    model_title: str = "gemini-2.5-flash-lite" # 세션 제목 (저비용 모델 사용 예정)
     model_summary: str = "gemini-2.5-flash"    # 배치/리포트 요약
     model_scenario: str = "gemini-2.5-flash"   # EMO 시나리오 (구조화 JSON)
-    #model_image: str = "gemini-2.5-flash-image"  # EMO 이미지 (Nano Banana )
+    #model_image: str = "gemini-2.5-flash-image"  # EMO 이미지 (Nano Banana ) - 계속 오류 나서 수정함. 
     model_image: str = "gemini-3.1-flash-image"  # EMO 이미지 (Nano Banana 2)
 
     @property
