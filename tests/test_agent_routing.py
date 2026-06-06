@@ -102,9 +102,20 @@ class TestMathRouting:
         assert resp.cta["type"] == "navigate_to_step"
 
     async def test_수학_일상_언급_도구_없음(self, runner):
-        # "수학 시험 봤어" — 학습 요청 아님, 도구 호출 없어야 함
         resp = await _run(runner, "오늘 수학 시험 봤어")
         assert resp.cta is None
+
+    async def test_수학_막연히_어렵다고만_하면_질문(self, runner):
+        # 개념 미특정 → math_help 없이 뭐가 어려운지 물어봐야 함
+        resp = await _run(runner, "수학이 너무 어려워")
+        assert resp.cta is None, "개념 없이 막연히 어렵다고 하면 도구 호출 없어야 함"
+        assert resp.reply, "뭐가 어려운지 되묻는 답변이 있어야 함"
+
+    async def test_수학_배우고있다는맥락_cta_있음(self, runner):
+        # "곱셈 나가고 있는데 어려워" — 개념 특정됨 → math_help 호출 → CTA
+        resp = await _run(runner, "곱셈 나가고 있는데 어려워")
+        assert resp.cta is not None, "배우고 있는 개념 언급 시 CTA가 있어야 함"
+        assert resp.cta["type"] == "navigate_to_step"
 
 
 @pytest.mark.asyncio
@@ -117,6 +128,12 @@ class TestKoreanRouting:
     async def test_국어_일상_언급_도구_없음(self, runner):
         resp = await _run(runner, "국어 시험 어려웠어")
         assert resp.cta is None
+
+    async def test_국어_바로_공부방_가고싶다_즉시_cta(self, runner):
+        # "국어 공부하고 싶어!" — 4단계 흐름 없이 즉시 CTA
+        resp = await _run(runner, "국어 공부하고 싶어!")
+        assert resp.cta is not None, "직접 이동 의향 시 즉시 CTA가 있어야 함"
+        assert resp.cta["type"] == "navigate_to_subject"
 
 
 @pytest.mark.asyncio
@@ -146,6 +163,21 @@ class TestTodoRouting:
         resp = await _run(runner, "오늘 저녁 8시에 친구들이랑 줄넘기 해야해, 할 일 추가해줘")
         assert resp.todos_created is not None
         assert resp.reply, "할 일 등록 후 확인 답변이 없으면 BE 폴백 메시지가 표시됨"
+
+
+@pytest.mark.asyncio
+class TestVocabularyRouting:
+    async def test_어휘력_오늘의단어_도구없음(self, runner):
+        # 도구 없이 단어 3개를 직접 알려줘야 함
+        resp = await _run(runner, "어휘력 키우고 싶어")
+        assert resp.cta is None
+        assert resp.todos_created is None
+        assert resp.reply, "단어 목록 답변이 있어야 함"
+
+    async def test_오늘의단어_요청(self, runner):
+        resp = await _run(runner, "오늘의 단어 알려줘")
+        assert resp.cta is None
+        assert resp.reply
 
 
 @pytest.mark.asyncio
