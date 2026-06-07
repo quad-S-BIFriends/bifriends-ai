@@ -36,7 +36,7 @@ Gemini 2.5 Flash / Flash-Image
 
 **🤎 부모 성장 리포트** — 주간 학습 집계를 받아 성장 요약·수학·국어·보호자 미션 4개 섹션을 Gemini로 생성해 반환한다.
 
-**🤎 친구랑 EMO 콘텐츠** — 감정별 4단계 학습 세트를 생성한다. 텍스트 생성(Gemini) → step3 이미지 3컷(멀티턴, 이전 컷을 context에 포함해 캐릭터 일관성 유지) 순으로 실행하며, 생성 실패 시 폴백 시나리오로 자동 대체한다.
+**🤎 친구랑 EMO 콘텐츠** — 감정별 4단계 학습 세트를 생성한다. 텍스트 생성(Gemini) → step3 이미지 3컷(모든 컷이 동일 앵커 이미지를 참조해 **병렬** 생성, 캐릭터 정체성 일관성 유지) 순으로 실행하며, 생성 실패 시 폴백 시나리오로 자동 대체한다.
 
 
 
@@ -87,6 +87,33 @@ Gemini 2.5 Flash / Flash-Image
 
 0–3 → GREEN (Gemini 호출 없음) · 4–7 → YELLOW · 8+ → RED  
 자해·자살 표현은 점수와 무관하게 **코드에서 즉시 RED 강제**
+
+### 이미지 생성 전략 실험
+
+친구랑 step3 이미지의 컷 간 일관성·레이턴시를 전략별로 비교하는 벤치 스크립트가 있다.
+프로덕션 코드 경로(`generate_emo_images`)를 그대로 호출하므로 실제 이미지 모델과 비용이 든다.
+
+```bash
+# 세 전략(sequential·hybrid·parallel)을 같은 시나리오로 비교
+python scripts/emo_image_bench.py
+
+# 감정·관심사 지정
+python scripts/emo_image_bench.py --emotion 속상함 --interests 공룡,그림그리기
+
+# 특정 전략만, 편차 확인용 반복
+python scripts/emo_image_bench.py --strategies hybrid,parallel --repeat 2
+```
+
+결과는 `experiments/emo_bench/<타임스탬프>/` 아래 전략별 폴더로 저장되고, `summary.md`에
+레이턴시 표와 컷 프롬프트가 함께 기록된다. 각 폴더의 `cut0/1/2.png`를 나란히 열어 비교한다.
+
+| 전략 | 참조 방식 | 특징 |
+|---|---|---|
+| `parallel` (기본) | 모든 컷이 동일 앵커만 참조, 동시 생성 | 가장 빠름·캐릭터 정체성 일관성 최고 |
+| `hybrid` | 1컷 먼저 → 나머지는 1컷 참조해 병렬 | 절충 |
+| `sequential` | 각 컷이 직전 컷을 순차 참조 | 인접 컷 연속성↑·드리프트 누적·가장 느림 |
+
+> 프로덕션 기본 전략은 [`generate_emo_images`](app/services/agent_runner.py)의 `strategy` 기본값으로 결정된다.
 
 
 ## 시작하기

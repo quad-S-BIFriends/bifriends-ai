@@ -23,3 +23,6 @@ __pycache__/
 .vscode/
 *.swp
 .DS_Store
+
+# 실험 산출물 (emo_image_bench.py 생성 이미지/요약)
+experiments/

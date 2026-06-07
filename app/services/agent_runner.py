@@ -15,6 +15,7 @@ ADK 1.18.0 기준:
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 from dataclasses import dataclass, field
@@ -362,68 +363,100 @@ class AgentRunner:
         )
         return (resp.text or "").strip()
  
+    async def _generate_one_image(self, parts: list, cfg) -> str | None:
+        """이미지 모델 1회 호출 → base64. 실패(빈 응답/차단/예외) 시 None."""
+        from app.core.config import settings
+        try:
+            resp = await self._genai.aio.models.generate_content(
+                model=settings.model_image,
+                contents=[types.Content(role="user", parts=parts)],
+                config=cfg,
+            )
+            return self._extract_image_b64(resp)
+        except Exception:
+            logger.exception("EMO 이미지 1컷 생성 실패")
+            return None
+
     async def generate_emo_images(
         self,
         *,
         anchor_instruction: str,
         prompts: list[str],
         gender: str,
+        strategy: str = "parallel",
     ) -> list[str | None]:
         """
-        step3 3컷 이미지를 멀티턴으로 순차 생성 → base64 리스트 반환.
-        - 첫 컷: 앵커 이미지(boy/girl) + anchor_instruction + prompts[0]
-        - 이후 컷: 직전 생성 이미지를 contents에 포함해 캐릭터/배경 일관성 유지
-        - 1:1 은 image_config 로 강제.
+        step3 컷 이미지를 생성 → base64 리스트 반환.
+
+        모든 컷은 앵커 이미지(boy/girl)를 동봉해 캐릭터 외형을 고정한다. 1:1 강제.
         실패(빈 응답/차단) 시 해당 컷은 None → 호출부(content_builder)가 폴백 처리.
+
+        strategy (속도 vs 컷 간 일관성 트레이드오프):
+          - "parallel"  : 모든 컷을 앵커만 참조해 동시 생성 (가장 빠름·캐릭터 정체성 일관성 최고). 기본값.
+          - "hybrid"    : 1컷 먼저 생성 → 나머지 컷은 1컷을 공통 참조로 병렬 (절충).
+          - "sequential": 컷을 순차 생성, 각 컷이 직전 컷을 참조 (인접 컷 연속성↑·드리프트 누적·가장 느림).
+
+        프로덕션 동작을 바꾸려면 호출부에서 strategy를 넘기거나 이 기본값을 변경한다.
+        (scripts/emo_image_bench.py 로 세 전략의 레이턴시·이미지를 직접 비교할 수 있다.)
         """
-        from app.core.config import settings
- 
-        # 앵커 이미지 바이트 로드
         anchor_path = _ANCHOR_PATH[gender]
-        anchor_bytes = anchor_path.read_bytes()
-        anchor_part = types.Part.from_bytes(data=anchor_bytes, mime_type="image/png")
- 
+        anchor_part = types.Part.from_bytes(
+            data=anchor_path.read_bytes(), mime_type="image/png"
+        )
         cfg = types.GenerateContentConfig(
             response_modalities=["IMAGE"],
             image_config=types.ImageConfig(aspect_ratio="1:1"),
         )
- 
+
+        if not prompts:
+            return []
+
+        def _img_part(b64: str):
+            return types.Part.from_bytes(data=base64.b64decode(b64), mime_type="image/png")
+
+        # ── parallel: 모든 컷이 앵커만 참조, 한 번에 동시 생성 ──
+        if strategy == "parallel":
+            async def gen(prompt: str):
+                parts = [types.Part(text=anchor_instruction), anchor_part, types.Part(text=prompt)]
+                return await self._generate_one_image(parts, cfg)
+            return list(await asyncio.gather(*(gen(p) for p in prompts)))
+
+        # ── hybrid: 1컷 먼저 → 나머지는 1컷을 공통 참조로 병렬 ──
+        if strategy == "hybrid":
+            first_parts = [types.Part(text=anchor_instruction), anchor_part, types.Part(text=prompts[0])]
+            first_b64 = await self._generate_one_image(first_parts, cfg)
+            if len(prompts) == 1:
+                return [first_b64]
+            prefix: list = []
+            if first_b64 is not None:
+                prefix.append(_img_part(first_b64))  # 1컷을 공통 참조로
+            prefix.append(anchor_part)
+
+            async def gen_rest(prompt: str):
+                return await self._generate_one_image(prefix + [types.Part(text=prompt)], cfg)
+            rest = await asyncio.gather(*(gen_rest(p) for p in prompts[1:]))
+            return [first_b64, *rest]
+
+        # ── sequential (기본): 각 컷이 직전 컷을 참조해 순차 생성 ──
         results: list[str | None] = []
-        prev_image_part = None  # 직전 컷 이미지(일관성용)
- 
+        prev_image_part = None
         for i, prompt in enumerate(prompts):
-            # contents 조립: 첫 컷은 앵커, 이후 컷은 직전 이미지 + 앵커지시 동봉
             parts: list = []
             if i == 0:
                 parts.append(types.Part(text=anchor_instruction))
                 parts.append(anchor_part)
             else:
-                # 직전 컷 이미지를 참조로 (드리프트 방지)
                 if prev_image_part is not None:
-                    parts.append(prev_image_part)
+                    parts.append(prev_image_part)  # 직전 컷 참조 (드리프트 방지)
                 parts.append(anchor_part)  # 앵커도 계속 동봉(외형 고정 강화)
             parts.append(types.Part(text=prompt))
- 
-            try:
-                resp = await self._genai.aio.models.generate_content(
-                    model=settings.model_image,
-                    contents=[types.Content(role="user", parts=parts)],
-                    config=cfg,
-                )
-                b64 = self._extract_image_b64(resp)
-            except Exception:
-                b64 = None
- 
+
+            b64 = await self._generate_one_image(parts, cfg)
             results.append(b64)
-            if b64 is not None:
-                prev_image_part = types.Part.from_bytes(
-                    data=base64.b64decode(b64), mime_type="image/png"
-                )
-            else:
-                prev_image_part = None  # 실패 컷은 참조 끊김
- 
+            prev_image_part = _img_part(b64) if b64 is not None else None
+
         return results
- 
+
     @staticmethod
     def _extract_image_b64(resp) -> str | None:
         """genai 응답에서 첫 이미지 inline_data(base64) 추출. 없으면 None."""
