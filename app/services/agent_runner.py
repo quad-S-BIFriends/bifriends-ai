@@ -38,6 +38,26 @@ from app.services.be_client import be_client
 
 _APP_NAME = "bifriends"
 
+# Gemini 2.5 thinking 모델이 function_call 이벤트에 system instruction을 텍스트로 포함하는 버그 대응.
+# leo_dynamic.txt 첫 줄과 일치하는 마커로 에코 감지.
+_SYS_ECHO_MARKER = "# 지금 대화 중인 아이 정보"
+
+
+def _clean_model_text(text: str) -> str:
+    """system instruction 에코가 포함된 텍스트에서 실제 답변만 추출."""
+    if not text or _SYS_ECHO_MARKER not in text:
+        return text
+    contaminated = text[text.find(_SYS_ECHO_MARKER):]
+    for p in reversed(contaminated.split("\n\n")):
+        p = p.strip()
+        if not p:
+            continue
+        if p[0] in "#①②③④▶-" or p.startswith("수학을") or p.startswith("예:"):
+            continue
+        if len(p) > 3:
+            return p
+    return ""
+
 
 @dataclass
 class ToolCallRecord:
@@ -164,19 +184,22 @@ class AgentRunner:
                 if not (event.content and event.content.parts):
                     continue
 
-                # 모든 model 이벤트에서 텍스트 수집 (thought_signature 등 non-text 파트는 p.text가 None)
-                if getattr(event.content, "role", None) == "model":
-                    candidate = "".join(
+                # function_call 이벤트는 fallback에서 제외 (system instruction 에코가 텍스트로 섞이는 버그 방어)
+                has_fc = any(getattr(p, "function_call", None) for p in event.content.parts)
+
+                # model 이벤트의 텍스트를 fallback으로 수집 (function_call 이벤트 제외)
+                if not has_fc and getattr(event.content, "role", None) == "model":
+                    candidate = _clean_model_text("".join(
                         p.text for p in event.content.parts if getattr(p, "text", None)
-                    )
+                    ))
                     if candidate:
-                        _fallback_text = candidate  # 마지막 model 텍스트를 폴백으로 유지
+                        _fallback_text = candidate
 
                 # is_final_response를 선호하되, 텍스트가 없으면 폴백에서 채운다
                 if event.is_final_response():
-                    candidate = "".join(
+                    candidate = _clean_model_text("".join(
                         p.text for p in event.content.parts if getattr(p, "text", None)
-                    )
+                    ))
                     if candidate:
                         final_text = candidate
         except Exception:
