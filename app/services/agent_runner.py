@@ -249,24 +249,26 @@ class AgentRunner:
                 if not (event.content and event.content.parts):
                     continue
 
+                has_fc = False
                 for part in event.content.parts:
                     fc = getattr(part, "function_call", None)
                     if fc and getattr(fc, "name", None):
+                        has_fc = True
                         trajectory.tool_calls.append(
                             ToolCallRecord(name=fc.name, args=dict(fc.args or {}))
                         )
 
-                if getattr(event.content, "role", None) == "model":
-                    candidate = "".join(
+                if not has_fc and getattr(event.content, "role", None) == "model":
+                    candidate = _clean_model_text("".join(
                         p.text for p in event.content.parts if getattr(p, "text", None)
-                    )
+                    ))
                     if candidate:
                         _fallback_text = candidate
 
                 if event.is_final_response():
-                    candidate = "".join(
+                    candidate = _clean_model_text("".join(
                         p.text for p in event.content.parts if getattr(p, "text", None)
-                    )
+                    ))
                     if candidate:
                         final_text = candidate
         except Exception:
