@@ -59,6 +59,23 @@ Gemini 2.5 Flash / Flash-Image
 `cta` 타입: `navigate_to_step` (수학) · `navigate_to_subject` (국어) · `null`  
 `todos_created`: 할 일 등록 시에만 배열, 나머지는 `null`
 
+### 레오 프롬프트 모듈
+
+레오는 **단일 에이전트**다. 시스템 프롬프트(static instruction)는 도메인별 수정이 쉽도록
+`app/prompts/leo/` 아래로 파일만 쪼개 두었고, [`agent.py`](app/agents/leo/agent.py)의
+`_load_static_prompt()`가 **파일명 순**으로 읽어 `\n\n`으로 이어 붙인다. 런타임에 멀티 에이전트로 분기하지 않는다.
+
+| 파일 | 내용 |
+|---|---|
+| `00_identity.txt` | 정체성·말투·판단 원칙 |
+| `10_math.txt` / `20_korean.txt` | 수학·국어 도움 라우팅·톤 |
+| `30_vocabulary.txt` / `40_todo.txt` / `50_casual.txt` | 어휘력·할 일·일상 대화 |
+| `60_safety.txt` | 안전 규칙 (모든 응답에 적용, **절대 비우지 말 것**) |
+| `70_examples.txt` | few-shot 예시 (항상 맨 뒤) |
+
+- 새 도메인은 `NN_xxx.txt` 파일만 추가하면 자동 포함된다 (코드 수정 불필요).
+- 세션별 동적 값(닉네임·학년·concept 목록)은 `app/prompts/leo_dynamic.txt`에 있고 static 뒤에 붙어 `{key}`가 치환된다.
+
 ### 안전 신호 점수 기준
 
 | 조건 | 점수 |
