@@ -38,7 +38,10 @@ python scripts/chat_cli.py --trajectory
 | `--grade N` | 아이 학년 (3~6) | 4 |
 | `--nickname NAME` | 아이 닉네임 | 테스트 |
 | `--trajectory` | 도구 호출 이름·인자 표시 | off |
-| `--real-be` | mock 대신 실제 BE 서버 사용 | off |
+| `--real-be` | mock 대신 실제 BE 서버 사용 (⚠️ Docker 내부에서만 동작) | off |
+
+> **⚠️ `--real-be` 주의**: BE URL이 Docker 내부 주소(`http://be:8080`)로 설정되어 있어 **로컬 터미널에서 실행하면 DNS 오류(`[Errno 8] nodename nor servname provided`)가 발생**한다.
+> `--real-be`는 Docker 컨테이너 내부에서 실행할 때만 사용한다. 로컬 테스트는 기본 mock 모드를 사용할 것.
 
 종료: `q` 입력 또는 `Ctrl+C`
 

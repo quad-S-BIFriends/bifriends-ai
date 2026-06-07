@@ -14,11 +14,14 @@ state 저장 키:
 """
 from __future__ import annotations
 
+import logging
+
 from google.adk.tools import ToolContext
 
 from app.schemas.chat import SubjectCTA
 from app.services.be_client import be_client
 
+logger = logging.getLogger(__name__)
 STATE_KOREAN_CTA = "korean_cta"
 
 
@@ -39,9 +42,13 @@ async def korean_help(tool_context: ToolContext) -> dict:
         - concept: 학습 개념 (예: "어휘")
     """
     member_id = tool_context.state.get("member_id")
-    data = await be_client.get_korean_current_lesson(member_id)
 
-    # 국어는 항상 navigate_to_subject CTA (과목 페이지 진입)
+    try:
+        data = await be_client.get_korean_current_lesson(member_id)
+    except Exception:
+        logger.exception("korean_help: BE 호출 실패 (member_id=%s)", member_id)
+        data = {}
+
     cta = SubjectCTA(label="국어 공부하러 가볼까?")
     tool_context.state[STATE_KOREAN_CTA] = cta.model_dump()
 

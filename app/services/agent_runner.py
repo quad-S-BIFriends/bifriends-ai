@@ -16,9 +16,12 @@ ADK 1.18.0 기준:
 from __future__ import annotations
 
 import json
+import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 import base64
+
+logger = logging.getLogger(__name__)
 
 from google import genai
 from google.adk.runners import Runner
@@ -112,8 +115,12 @@ class AgentRunner:
             return existing
 
         # --- 세션 첫 턴: 수학 concept 목록 받아오기 ---
-        concepts_raw = await be_client.get_math_concepts(req.member_id)
-        concepts = concepts_raw.get("concepts", [])
+        try:
+            concepts_raw = await be_client.get_math_concepts(req.member_id)
+            concepts = concepts_raw.get("concepts", [])
+        except Exception:
+            logger.exception("_ensure_session: get_math_concepts 실패 (member_id=%s)", req.member_id)
+            concepts = []
 
         # LLM에게 보여줄 텍스트(concept + stepTitle 함께)
         concepts_text = json.dumps(
@@ -147,33 +154,38 @@ class AgentRunner:
         final_text = ""
         _fallback_text = ""  # is_final_response 텍스트가 비면 여기서 가져옴
 
-        async for event in self.runner.run_async(
-            user_id=user_id,
-            session_id=req.session_id,
-            new_message=message,
-            state_delta=reset_delta,
-        ):
-            if not (event.content and event.content.parts):
-                continue
+        try:
+            async for event in self.runner.run_async(
+                user_id=user_id,
+                session_id=req.session_id,
+                new_message=message,
+                state_delta=reset_delta,
+            ):
+                if not (event.content and event.content.parts):
+                    continue
 
-            # 모든 model 이벤트에서 텍스트 수집 (thought_signature 등 non-text 파트는 p.text가 None)
-            if getattr(event.content, "role", None) == "model":
-                candidate = "".join(
-                    p.text for p in event.content.parts if getattr(p, "text", None)
-                )
-                if candidate:
-                    _fallback_text = candidate  # 마지막 model 텍스트를 폴백으로 유지
+                # 모든 model 이벤트에서 텍스트 수집 (thought_signature 등 non-text 파트는 p.text가 None)
+                if getattr(event.content, "role", None) == "model":
+                    candidate = "".join(
+                        p.text for p in event.content.parts if getattr(p, "text", None)
+                    )
+                    if candidate:
+                        _fallback_text = candidate  # 마지막 model 텍스트를 폴백으로 유지
 
-            # is_final_response를 선호하되, 텍스트가 없으면 폴백에서 채운다
-            if event.is_final_response():
-                candidate = "".join(
-                    p.text for p in event.content.parts if getattr(p, "text", None)
-                )
-                if candidate:
-                    final_text = candidate
+                # is_final_response를 선호하되, 텍스트가 없으면 폴백에서 채운다
+                if event.is_final_response():
+                    candidate = "".join(
+                        p.text for p in event.content.parts if getattr(p, "text", None)
+                    )
+                    if candidate:
+                        final_text = candidate
+        except Exception:
+            logger.exception("run_async 실패: member_id=%s session_id=%s", req.member_id, req.session_id)
 
         if not final_text:
             final_text = _fallback_text
+        if not final_text:
+            final_text = "레오가 잠깐 생각 중이야! 😊 다시 한번 말해줄래?"
 
         # 실행 후 state에서 CTA/todos 수거
         session = await self._session_service.get_session(
@@ -204,38 +216,43 @@ class AgentRunner:
         final_text = ""
         _fallback_text = ""
 
-        async for event in self.runner.run_async(
-            user_id=user_id,
-            session_id=req.session_id,
-            new_message=message,
-            state_delta=reset_delta,
-        ):
-            if not (event.content and event.content.parts):
-                continue
+        try:
+            async for event in self.runner.run_async(
+                user_id=user_id,
+                session_id=req.session_id,
+                new_message=message,
+                state_delta=reset_delta,
+            ):
+                if not (event.content and event.content.parts):
+                    continue
 
-            for part in event.content.parts:
-                fc = getattr(part, "function_call", None)
-                if fc and getattr(fc, "name", None):
-                    trajectory.tool_calls.append(
-                        ToolCallRecord(name=fc.name, args=dict(fc.args or {}))
+                for part in event.content.parts:
+                    fc = getattr(part, "function_call", None)
+                    if fc and getattr(fc, "name", None):
+                        trajectory.tool_calls.append(
+                            ToolCallRecord(name=fc.name, args=dict(fc.args or {}))
+                        )
+
+                if getattr(event.content, "role", None) == "model":
+                    candidate = "".join(
+                        p.text for p in event.content.parts if getattr(p, "text", None)
                     )
+                    if candidate:
+                        _fallback_text = candidate
 
-            if getattr(event.content, "role", None) == "model":
-                candidate = "".join(
-                    p.text for p in event.content.parts if getattr(p, "text", None)
-                )
-                if candidate:
-                    _fallback_text = candidate
-
-            if event.is_final_response():
-                candidate = "".join(
-                    p.text for p in event.content.parts if getattr(p, "text", None)
-                )
-                if candidate:
-                    final_text = candidate
+                if event.is_final_response():
+                    candidate = "".join(
+                        p.text for p in event.content.parts if getattr(p, "text", None)
+                    )
+                    if candidate:
+                        final_text = candidate
+        except Exception:
+            logger.exception("run_async 실패 (trajectory): member_id=%s session_id=%s", req.member_id, req.session_id)
 
         if not final_text:
             final_text = _fallback_text
+        if not final_text:
+            final_text = "레오가 잠깐 생각 중이야! 😊 다시 한번 말해줄래?"
 
         session = await self._session_service.get_session(
             app_name=_APP_NAME, user_id=user_id, session_id=req.session_id

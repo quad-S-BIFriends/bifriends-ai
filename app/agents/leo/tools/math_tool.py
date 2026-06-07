@@ -25,10 +25,14 @@ state 키:
 """
 from __future__ import annotations
 
+import logging
+
 from google.adk.tools import ToolContext
 
 from app.schemas.chat import StepCTA
 from app.services.be_client import be_client
+
+logger = logging.getLogger(__name__)
 
 _NAVIGABLE = ("AVAILABLE", "IN_PROGRESS", "COMPLETED")
 
@@ -114,7 +118,18 @@ async def math_help(concept: str, tool_context: ToolContext) -> dict:
         }
 
     # 2) 정확한 concept으로 BE 상태 조회
-    data = await be_client.get_math_lesson_status(member_id, concept)
+    try:
+        data = await be_client.get_math_lesson_status(member_id, concept)
+    except Exception:
+        logger.exception("math_help: BE 호출 실패 (member_id=%s, concept=%s)", member_id, concept)
+        tool_context.state[STATE_MATH_CTA] = None
+        return {
+            "matched_concept": concept,
+            "lesson_status": "NOT_FOUND",
+            "step_title": None,
+            "locked_concept": None,
+            "in_chat_practice": True,
+        }
     status = data.get("lessonStatus")
 
     cta = _build_math_cta(data)
