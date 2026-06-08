@@ -11,14 +11,15 @@
 LLM/이미지 모델 실제 호출부는 agent_runner/이미지 클라이언트에 위임(여기서는 인터페이스로 받음).
 """
 
-import json
 import logging
 import uuid
 from typing import Optional
 
+from app.core.llm_json import parse_llm_json
 from app.schemas.content import (
     Emotion, ScenarioRequest, ScenarioResponse, MindSteps,
     Step1, Step2, Step3, Step4, Choice, Step4Choice, ComicCut, Reward, ChoiceType,
+    ScenarioText,
 )
 from app.services.image_prompt import (
     EMOTION_GENDER, assemble_step3_prompt, assemble_anchor_instruction,
@@ -26,20 +27,6 @@ from app.services.image_prompt import (
 from app.services.content_fallback import get_step12_urls
 
 logger = logging.getLogger(__name__)
-
-
-# ---- 코드펜스 제거 + JSON 파싱 (프로젝트 공통 패턴) ------------------------
-
-def _parse_llm_json(raw: str) -> dict:
-    """LLM 출력에서 ```json 펜스 제거 후 파싱. 실패 시 ValueError."""
-    s = raw.strip()
-    if s.startswith("```"):
-        # ```json ... ``` 또는 ``` ... ```
-        s = s.split("```", 2)[1] if s.count("```") >= 2 else s.strip("`")
-        if s.lstrip().lower().startswith("json"):
-            s = s.lstrip()[4:]
-    s = s.strip().strip("`").strip()
-    return json.loads(s)
 
 
 # ---- 2) image_prompt 조립 (순수 코드) -------------------------------------
@@ -155,7 +142,9 @@ async def build_scenario(
             interests=req.interests,
             learned_expressions=req.learned_expressions,
         )
-        text = _parse_llm_json(raw)
+        # 펜스 제거 → JSON 파싱 → Pydantic으로 구조 검증(필드 누락/타입 오류 시 폴백).
+        # 검증 통과분만 dict로 변환해 이후 조립(코드)에 넘긴다.
+        text = ScenarioText.model_validate(parse_llm_json(raw)).model_dump()
 
         # 2) image_prompt 조립 (코드)
         step3_prompts = build_step3_prompts(emotion, text["step3"])

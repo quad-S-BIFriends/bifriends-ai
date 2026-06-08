@@ -38,8 +38,9 @@ load_dotenv()
 from google import genai
 
 from app.core.config import settings
+from app.core.llm_json import parse_llm_json
 from app.services.agent_runner import AgentRunner
-from app.services.content_builder import _parse_llm_json, build_step3_prompts
+from app.services.content_builder import build_step3_prompts
 from app.services.image_prompt import EMOTION_GENDER, assemble_anchor_instruction
 from app.schemas.content import Emotion
 
@@ -75,7 +76,7 @@ async def _build_prompts(runner: AgentRunner, args) -> tuple[Emotion, str, str, 
         interests=args.interests,
         learned_expressions=[],
     )
-    text = _parse_llm_json(raw)
+    text = parse_llm_json(raw)
     prompts = build_step3_prompts(emotion, text["step3"])
     anchor_instr = assemble_anchor_instruction(gender)
     return emotion, gender, anchor_instr, prompts

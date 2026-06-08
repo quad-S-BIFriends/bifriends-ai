@@ -17,6 +17,7 @@ import json
 import logging
 from pathlib import Path
 
+from app.core.llm_json import parse_llm_json
 from app.schemas.report import (
     ParentMission,
     ReportSections,
@@ -44,16 +45,6 @@ _FALLBACK = ReportSections(
 )
 
 
-def _strip_code_fence(text: str) -> str:
-    """혹시 ```json ... ``` 으로 감싸 오면 벗겨낸다."""
-    t = text.strip()
-    if t.startswith("```"):
-        t = t.split("\n", 1)[-1]       # 첫 줄(``` 또는 ```json) 제거
-        if t.endswith("```"):
-            t = t[: t.rfind("```")]
-    return t.strip()
-
-
 async def build_weekly_report(req: WeeklyReportRequest) -> WeeklyReportResponse:
     # 1. 주간 학습 집계 조회 (실패해도 빈 데이터로 진행)
     try:
@@ -72,7 +63,7 @@ async def build_weekly_report(req: WeeklyReportRequest) -> WeeklyReportResponse:
     )
     try:
         raw = await agent_runner.generate_text(prompt)
-        parsed = json.loads(_strip_code_fence(raw))
+        parsed = parse_llm_json(raw)
         sections = ReportSections(
             growth_summary=parsed["growth_summary"],
             math=SubjectSection(**parsed["math"]),

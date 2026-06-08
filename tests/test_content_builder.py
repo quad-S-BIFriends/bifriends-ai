@@ -1,43 +1,10 @@
 """
 content_builder 순수 함수 유닛 테스트.
 
-_parse_llm_json: LLM 출력 파싱 (펜스 제거, 엣지케이스)
 _coerce_step4_choice: step4 choice 타입 방어 보정
+(LLM 출력 파싱 테스트는 tests/test_llm_json.py 로 이동)
 """
-import pytest
-from app.services.content_builder import _parse_llm_json, _coerce_step4_choice
-
-
-class TestParseLlmJson:
-    def test_순수_json(self):
-        assert _parse_llm_json('{"key": "value"}') == {"key": "value"}
-
-    def test_json_펜스_with_언어태그(self):
-        raw = '```json\n{"key": "value"}\n```'
-        assert _parse_llm_json(raw) == {"key": "value"}
-
-    def test_json_펜스_without_언어태그(self):
-        raw = '```\n{"key": "value"}\n```'
-        assert _parse_llm_json(raw) == {"key": "value"}
-
-    def test_앞뒤_공백(self):
-        assert _parse_llm_json('  {"key": "value"}  ') == {"key": "value"}
-
-    def test_중첩_json(self):
-        raw = '{"a": {"b": [1, 2, 3]}}'
-        assert _parse_llm_json(raw) == {"a": {"b": [1, 2, 3]}}
-
-    def test_깨진_json_예외(self):
-        with pytest.raises(Exception):
-            _parse_llm_json("이건 JSON이 아닙니다")
-
-    def test_빈_문자열_예외(self):
-        with pytest.raises(Exception):
-            _parse_llm_json("")
-
-    def test_펜스만_있고_내용_없음_예외(self):
-        with pytest.raises(Exception):
-            _parse_llm_json("```json\n```")
+from app.services.content_builder import _coerce_step4_choice
 
 
 class TestCoerceStep4Choice:
