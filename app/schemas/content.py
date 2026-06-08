@@ -142,6 +142,62 @@ class MindSteps(BaseModel):
     step4: Step4
 
 
+# ---- LLM 텍스트 출력 검증용 (호출1 결과 구조) -----------------------------
+# 응답 모델(Step1~4)과 달리 LLM이 '실제로 생성하는' 필드만 담는다.
+# (title·image_url·button 문구 등 코드가 채우는 고정값은 제외)
+# build_scenario가 파싱 직후 ScenarioText.model_validate로 구조를 검증한다.
+
+class ComicCutText(BaseModel):
+    """Step3 한 컷의 LLM 출력(scene/cast). 최종 image_prompt는 코드가 조립."""
+    cut: int
+    text: str
+    scene: str
+    cast: str = "main"           # "main" | "main+friend" (누락 시 main)
+
+
+class Step1Text(BaseModel):
+    expression: str
+    body_sensation: str
+    situation_example: str
+
+
+class Step2Text(BaseModel):
+    visual_clue: str
+    choices: list[Choice]
+
+
+class Step3Text(BaseModel):
+    background: str
+    comic: list[ComicCutText]
+    choices: list[Choice]
+
+
+class Step4ChoiceText(BaseModel):
+    """LLM이 준 step4 choice. type은 허용 외 값(예: 'pressuring')이 올 수 있어
+    enum이 아닌 str로 받고, 보정은 코드(_coerce_step4_choice)가 한다."""
+    id: str
+    text: str
+    type: str
+    is_correct: bool
+    feedback: str
+
+
+class Step4Text(BaseModel):
+    leo_intro: str
+    choices: list[Step4ChoiceText]
+    success_message: str
+
+
+class ScenarioText(BaseModel):
+    """호출1(텍스트 LLM) 출력 전체 구조. 검증 통과 후 dict로 변환해 조립에 넘긴다."""
+    situation: str
+    learned_expression: str
+    step1: Step1Text
+    step2: Step2Text
+    step3: Step3Text
+    step4: Step4Text
+
+
 # ---- 응답 -----------------------------------------------------------------
 
 class ScenarioResponse(BaseModel):
