@@ -415,7 +415,7 @@ class AgentRunner:
         nickname: str,
         interests: list[str],
         learned_expressions: list[str],
-        timeout: float = 15.0,
+        timeout: float = 30.0,
     ) -> str:
         """
         친구랑 시나리오 '텍스트'를 1회성으로 생성 (JSON 문자열 반환).

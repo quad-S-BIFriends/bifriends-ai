@@ -37,12 +37,12 @@ _PROMPT = (
 _GUIDE_DIR = Path(__file__).parent.parent / "assets" / "parent_guide"
 
 _FALLBACK = ReportSections(
-    growth_summary="이번 주 리포트를 정리하는 데 어려움이 있었어요. 다음 주에 다시 확인해 주세요.",
+    growth_summary="이번 주 리포트를 준비하는 데 잠깐 어려움이 있었어요. 걱정 마세요, 다음 주에 더 멋진 리포트로 찾아올게요 :)",
     math=SubjectSection(well_done="-", struggled="-"),
     korean=SubjectSection(well_done="-", struggled="-"),
     parent_mission=ParentMission(
-        praise="이번 주도 함께해줘서 고마워!",
-        activity="오늘 아이에게 '오늘 제일 재미있었던 거 뭐야?' 하고 가볍게 물어봐 주세요. 짧은 대화도 아이에게 큰 힘이 됩니다.",
+        praise="이번 주도 레오 열어봤네, 그 작은 한 걸음이 정말 대단해!",
+        activity="오늘 아이에게 '오늘 제일 기억에 남는 게 뭐야?' 하고 가볍게 물어봐 주세요. 짧은 대화도 아이에게 큰 힘이 됩니다.",
     ),
 )
 
@@ -67,10 +67,26 @@ async def build_weekly_report(req: WeeklyReportRequest) -> WeeklyReportResponse:
 
     # 2. 프롬프트 구성 + LLM 호출
     guide = _load_parent_guide(req.grade)
+
+    # 이번 주 학습 활동이 전혀 없으면 LLM에 컨텍스트를 명시해 따뜻한 톤 유도
+    no_activity = (
+        not summary.get("math")
+        and not summary.get("korean")
+        and not (summary.get("todos") or {}).get("completed")
+    )
+    no_activity_hint = (
+        "\n\n## 참고 (이번 주 활동 없음)\n"
+        "이번 주에는 아이가 레오와 학습을 하지 않았습니다. "
+        "growth_summary는 부담 없이 따뜻하게, 레오와의 첫 만남을 응원하는 2문장으로 작성해 주세요. "
+        "예: '이번 주는 레오와 아직 만나지 못했네요! 언제든 레오가 기다리고 있을 거예요 :)'"
+        if no_activity else ""
+    )
+
     prompt = (
         _PROMPT
         + "\n\n## 이번 아이의 학년대별 부모 역할 가이드\n"
         + guide
+        + no_activity_hint
         + "\n\n## 학습 집계 데이터\n"
         + json.dumps(summary, ensure_ascii=False)
     )
@@ -78,10 +94,10 @@ async def build_weekly_report(req: WeeklyReportRequest) -> WeeklyReportResponse:
         raw = await agent_runner.generate_text(prompt)
         parsed = parse_llm_json(raw)
         mission = parsed.get("parent_mission", {})
-        if not mission.get("praise"):
+        if not (mission.get("praise") or "").strip():
             logger.warning("praise 비어있음 → 하드코딩 폴백 (member_id=%s)", req.member_id)
-            mission["praise"] = "천천히 해나가는 것만으로도 충분히 멋져! 다음 주도 차근차근 해보자 ☀️"
-        if not mission.get("activity"):
+            mission["praise"] = "천천히 해나가는 것만으로도 충분히 멋져! 다음 주도 차근차근 해보자 :)"
+        if not (mission.get("activity") or "").strip():
             logger.warning("activity 비어있음 → 하드코딩 폴백 (member_id=%s)", req.member_id)
             mission["activity"] = "오늘 아이에게 '오늘 제일 기억에 남는 게 뭐야?' 하고 가볍게 물어봐 주세요. 짧은 대화도 아이에게 큰 힘이 됩니다."
         sections = ReportSections(
