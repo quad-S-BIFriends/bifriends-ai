@@ -415,15 +415,17 @@ class AgentRunner:
         nickname: str,
         interests: list[str],
         learned_expressions: list[str],
+        timeout: float = 20.0,
     ) -> str:
         """
         친구랑 시나리오 '텍스트'를 1회성으로 생성 (JSON 문자열 반환).
         ADK 대화 세션과 무관 — generate_text 와 동일 계열.
         content_scenario.txt 를 시스템 지시로, 입력을 사용자 메시지로 전달.
         모델: settings.model_scenario (구조화 JSON용).
+        timeout: SDK 내부 retry 포함 전체 제한 시간 (초). 초과 시 TimeoutError → 호출부 fallback.
         """
         from app.core.config import settings  # 지연 import (예시 파일 기준)
- 
+
         user_input = (
             f"emotion(감정): {emotion}\n"
             f"nickname(아이 이름): {nickname}\n"
@@ -432,27 +434,45 @@ class AgentRunner:
             f"{', '.join(learned_expressions) if learned_expressions else '없음'}\n"
             f"위 조건으로 4단계 감정 학습 세트를 생성해줘. 순수 JSON만 출력."
         )
-        resp = await self._genai.aio.models.generate_content(
-            model=settings.model_scenario,
-            contents=[
-                types.Content(role="user", parts=[
-                    types.Part(text=_EMO_SCENARIO_PROMPT),
-                    types.Part(text=user_input),
-                ]),
-            ],
-        )
-        return (resp.text or "").strip()
- 
-    async def _generate_one_image(self, parts: list, cfg) -> str | None:
-        """이미지 모델 1회 호출 → base64. 실패(빈 응답/차단/예외) 시 None."""
-        from app.core.config import settings
+
+        async def _call():
+            resp = await self._genai.aio.models.generate_content(
+                model=settings.model_scenario,
+                contents=[
+                    types.Content(role="user", parts=[
+                        types.Part(text=_EMO_SCENARIO_PROMPT),
+                        types.Part(text=user_input),
+                    ]),
+                ],
+            )
+            return (resp.text or "").strip()
+
         try:
+            return await asyncio.wait_for(_call(), timeout=timeout)
+        except asyncio.TimeoutError:
+            logger.error(
+                "generate_emo_scenario_text 타임아웃 (%.0fs 초과): emotion=%s",
+                timeout, emotion,
+            )
+            raise
+ 
+    async def _generate_one_image(self, parts: list, cfg, timeout: float = 25.0) -> str | None:
+        """이미지 모델 1회 호출 → base64. 실패(빈 응답/차단/타임아웃/예외) 시 None."""
+        from app.core.config import settings
+
+        async def _call():
             resp = await self._genai.aio.models.generate_content(
                 model=settings.model_image,
                 contents=[types.Content(role="user", parts=parts)],
                 config=cfg,
             )
             return self._extract_image_b64(resp)
+
+        try:
+            return await asyncio.wait_for(_call(), timeout=timeout)
+        except asyncio.TimeoutError:
+            logger.error("EMO 이미지 1컷 타임아웃 (%.0fs 초과)", timeout)
+            return None
         except Exception:
             logger.exception("EMO 이미지 1컷 생성 실패")
             return None
