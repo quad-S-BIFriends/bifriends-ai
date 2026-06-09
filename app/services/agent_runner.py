@@ -415,7 +415,7 @@ class AgentRunner:
         nickname: str,
         interests: list[str],
         learned_expressions: list[str],
-        timeout: float = 20.0,
+        timeout: float = 15.0,
     ) -> str:
         """
         친구랑 시나리오 '텍스트'를 1회성으로 생성 (JSON 문자열 반환).
@@ -456,7 +456,7 @@ class AgentRunner:
             )
             raise
  
-    async def _generate_one_image(self, parts: list, cfg, timeout: float = 25.0) -> str | None:
+    async def _generate_one_image(self, parts: list, cfg, timeout: float = 20.0) -> str | None:
         """이미지 모델 1회 호출 → base64. 실패(빈 응답/차단/타임아웃/예외) 시 None."""
         from app.core.config import settings
 
