@@ -94,6 +94,17 @@ async def build_weekly_report(req: WeeklyReportRequest) -> WeeklyReportResponse:
         logger.exception("리포트 생성/파싱 실패 (member_id=%s)", req.member_id)
         sections = _FALLBACK
 
+    # 3. BE 콜백 — sections JSON 저장
+    try:
+        await be_client.post_weekly_report(
+            req.member_id,
+            req.week_start,
+            req.week_end,
+            sections.model_dump_json(),
+        )
+    except Exception:
+        logger.exception("BE 콜백 실패 (member_id=%s) — 리포트는 정상 반환", req.member_id)
+
     return WeeklyReportResponse(
         member_id=req.member_id,
         week_start=req.week_start,

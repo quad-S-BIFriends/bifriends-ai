@@ -133,7 +133,7 @@ class BEClient:
         return resp.json()
 
     # ================================================================
-    # 부모 성장 리포트 — 주간 학습 집계 조회
+    # 부모 성장 리포트 — 주간 학습 집계 조회 / 콜백
     # ================================================================
     async def get_learning_summary(
         self, member_id: int, week_start: str, week_end: str
@@ -153,7 +153,23 @@ class BEClient:
         )
         resp.raise_for_status()
         return resp.json()
- 
+
+    async def post_weekly_report(
+        self, member_id: int, week_start: str, week_end: str, sections_json: str
+    ) -> dict:
+        """주간 성장 리포트 콜백 — AI가 생성한 sections JSON 문자열을 BE에 저장."""
+        resp = await self.client.post(
+            "/api/v1/weekly-report",
+            json={
+                "member_id": member_id,
+                "week_start": week_start,
+                "week_end": week_end,
+                "sections": sections_json,
+            },
+        )
+        resp.raise_for_status()
+        return resp.json()
+
 
 # 앱 전역에서 공유하는 단일 인스턴스
 be_client = BEClient()

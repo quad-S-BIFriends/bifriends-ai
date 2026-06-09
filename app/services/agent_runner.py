@@ -370,7 +370,7 @@ class AgentRunner:
         response = ChatResponse(reply=final_text, cta=cta, todos_created=todos or None)
         return response, trajectory
 
-    async def generate_text(self, prompt: str, model: str = "gemini-2.0-flash") -> str:
+    async def generate_text(self, prompt: str, model: str = "") -> str:
         """
         ADK 세션과 무관한 1회성 텍스트 생성 (배치·리포트 등에서 공용).
         실패 시 예외를 그대로 올리므로 호출부에서 처리한다.
