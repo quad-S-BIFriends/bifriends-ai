@@ -9,6 +9,7 @@ class WeeklyReportRequest(BaseModel):
     member_id: int
     week_start: str  # yyyy-MM-dd
     week_end: str    # yyyy-MM-dd
+    grade: int       # 학년 (3~6)
 
 
 class SubjectSection(BaseModel):
@@ -19,8 +20,8 @@ class SubjectSection(BaseModel):
 
 class ParentMission(BaseModel):
     """보호자 미션."""
-    praise: str      # 아이에게 건넬 칭찬 멘트
-    activity: str    # 함께하면 좋은 활동
+    praise: str    # 아이에게 건넬 칭찬 멘트
+    activity: str  # 학년별 가이드 기반 부모 팁
 
 
 class ReportSections(BaseModel):
