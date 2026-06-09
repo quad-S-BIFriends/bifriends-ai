@@ -457,7 +457,7 @@ class AgentRunner:
             raise
  
     async def _generate_one_image(self, parts: list, cfg, timeout: float = 20.0) -> str | None:
-        """이미지 모델 1회 호출 → base64. 실패(빈 응답/차단/타임아웃/예외) 시 None."""
+        """이미지 모델 1회 호출 → base64. 타임아웃은 재시도 없이 즉시 None, API 오류(503/429 등)는 1회 재시도."""
         from app.core.config import settings
 
         async def _call():
@@ -468,14 +468,17 @@ class AgentRunner:
             )
             return self._extract_image_b64(resp)
 
-        try:
-            return await asyncio.wait_for(_call(), timeout=timeout)
-        except asyncio.TimeoutError:
-            logger.error("EMO 이미지 1컷 타임아웃 (%.0fs 초과)", timeout)
-            return None
-        except Exception:
-            logger.exception("EMO 이미지 1컷 생성 실패")
-            return None
+        for attempt in range(2):
+            try:
+                return await asyncio.wait_for(_call(), timeout=timeout)
+            except asyncio.TimeoutError:
+                logger.error("EMO 이미지 1컷 타임아웃 (%.0fs 초과)", timeout)
+                return None  # 타임아웃은 재시도 없음 (이미 충분히 기다림)
+            except Exception:
+                logger.exception("EMO 이미지 1컷 생성 실패 (attempt=%d)", attempt + 1)
+                if attempt == 0:
+                    await asyncio.sleep(3.0)  # 503/429 등 일시 오류 → 3초 백오프 후 1회 재시도
+        return None
 
     async def generate_emo_images(
         self,
@@ -514,12 +517,16 @@ class AgentRunner:
         def _img_part(b64: str):
             return types.Part.from_bytes(data=base64.b64decode(b64), mime_type="image/png")
 
-        # ── parallel: 모든 컷이 앵커만 참조, 한 번에 동시 생성 ──
+        # ── parallel: 모든 컷이 앵커만 참조, 2초 stagger 후 동시 생성 ──
+        # stagger 이유: 동시에 3요청을 보내면 Gemini rate limit/503에 동시 걸릴 확률이 높음.
+        # 2초 간격으로 시작을 분산해 API 부하를 줄인다 (최대 추가 지연: 4s).
         if strategy == "parallel":
-            async def gen(prompt: str):
+            async def gen(prompt: str, delay: float = 0.0):
+                if delay:
+                    await asyncio.sleep(delay)
                 parts = [types.Part(text=anchor_instruction), anchor_part, types.Part(text=prompt)]
                 return await self._generate_one_image(parts, cfg)
-            return list(await asyncio.gather(*(gen(p) for p in prompts)))
+            return list(await asyncio.gather(*(gen(p, i * 2.0) for i, p in enumerate(prompts))))
 
         # ── hybrid: 1컷 먼저 → 나머지는 1컷을 공통 참조로 병렬 ──
         if strategy == "hybrid":
