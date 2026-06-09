@@ -152,6 +152,63 @@ networks:
 
 ---
 
+## 로그 확인
+
+로그는 Python 표준 `logging` → uvicorn → **Docker stdout/stderr** 로 흐릅니다. 별도 파일로 저장되지 않으며 `docker logs` 로 확인합니다.
+
+### 기본 명령어
+
+```bash
+# 최근 100줄
+docker logs bifriends-ai --tail 100
+
+# 1시간 이내 실시간 팔로우
+docker logs bifriends-ai --since 1h -f
+
+# WARNING 이상만 필터
+docker logs bifriends-ai 2>&1 | grep -E "WARNING|ERROR"
+
+# 특정 member_id 추적
+docker logs bifriends-ai 2>&1 | grep "member_id=<ID>"
+```
+
+### 레오 응답이 "레오가 잠깐 생각 중이야!"로 나왔을 때
+
+아래 키워드 순서대로 검색하면 원인이 특정됩니다.
+
+| 로그 키워드 | 레벨 | 의미 |
+|---|---|---|
+| `run_async 실패` | ERROR | `run_async` 자체가 예외로 종료됨 (스택 트레이스 함께 출력) |
+| `ADK 에러 이벤트` | WARNING | ADK가 `error_code` / `error_message`를 이벤트에 실어 보냄 (Gemini 내부 거절·할당량 등) |
+| `content/parts 없음` | WARNING | `is_final_response=True`인데 텍스트 이벤트 자체가 없음 (`interrupted` 값 확인) |
+| `텍스트 비어있음` | WARNING | `is_final_response=True`인데 raw 텍스트가 빈 문자열 (`raw_len` 확인) |
+| `_clean_model_text가 … 제거함` | DEBUG | system instruction 에코 버그로 텍스트가 전부 걸러짐 |
+| `fallback 텍스트로 대체` | WARNING | final_response는 비었지만 중간 텍스트로 대체 성공 |
+| `하드코딩 폴백 반환` | ERROR | 텍스트를 전혀 추출 못함 → 사용자에게 폴백 문구 노출 |
+
+```bash
+# 폴백 발생 시 빠른 원인 파악
+docker logs bifriends-ai 2>&1 | grep -E "ADK 에러|content/parts 없음|텍스트 비어있음|하드코딩 폴백"
+```
+
+### 로그 레벨 기본값
+
+`DEBUG` 로그는 기본적으로 출력되지 않습니다. 상세 이벤트 흐름을 보려면 환경변수로 레벨을 내립니다.
+
+```bash
+# docker-compose.yml environment에 추가
+LOG_LEVEL: DEBUG
+```
+
+그리고 `main.py` 또는 앱 진입점에서:
+
+```python
+import logging
+logging.basicConfig(level=logging.DEBUG)
+```
+
+---
+
 ## 환경변수
 
 | 변수 | 설명 | 기본값 |

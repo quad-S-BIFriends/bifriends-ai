@@ -182,7 +182,29 @@ class AgentRunner:
                 new_message=message,
                 state_delta=reset_delta,
             ):
+                _err_code = getattr(event, "error_code", None)
+                _err_msg = getattr(event, "error_message", None)
+                _interrupted = getattr(event, "interrupted", None)
+
+                logger.debug(
+                    "ADK event: is_final=%s interrupted=%s error_code=%s error_msg=%s has_content=%s member_id=%s",
+                    event.is_final_response(), _interrupted, _err_code, _err_msg,
+                    bool(event.content and event.content.parts), req.member_id,
+                )
+
+                if _err_code or _err_msg:
+                    logger.warning(
+                        "ADK 에러 이벤트: error_code=%s error_msg=%s member_id=%s session_id=%s",
+                        _err_code, _err_msg, req.member_id, req.session_id,
+                    )
+
                 if not (event.content and event.content.parts):
+                    if event.is_final_response():
+                        logger.warning(
+                            "is_final_response=True 이지만 content/parts 없음: "
+                            "interrupted=%s error_code=%s member_id=%s session_id=%s",
+                            _interrupted, _err_code, req.member_id, req.session_id,
+                        )
                     continue
 
                 # function_call 이벤트는 fallback에서 제외 (system instruction 에코가 텍스트로 섞이는 버그 방어)
@@ -190,25 +212,43 @@ class AgentRunner:
 
                 # model 이벤트의 텍스트를 fallback으로 수집 (function_call 이벤트 제외)
                 if not has_fc and getattr(event.content, "role", None) == "model":
-                    candidate = _clean_model_text("".join(
-                        p.text for p in event.content.parts if getattr(p, "text", None)
-                    ))
+                    raw = "".join(p.text for p in event.content.parts if getattr(p, "text", None))
+                    candidate = _clean_model_text(raw)
                     if candidate:
                         _fallback_text = candidate
+                    elif raw:
+                        logger.debug(
+                            "_clean_model_text가 fallback 텍스트를 완전히 제거함: raw_len=%d member_id=%s",
+                            len(raw), req.member_id,
+                        )
 
                 # is_final_response를 선호하되, 텍스트가 없으면 폴백에서 채운다
                 if event.is_final_response():
-                    candidate = _clean_model_text("".join(
-                        p.text for p in event.content.parts if getattr(p, "text", None)
-                    ))
+                    raw = "".join(p.text for p in event.content.parts if getattr(p, "text", None))
+                    candidate = _clean_model_text(raw)
                     if candidate:
                         final_text = candidate
+                    else:
+                        logger.warning(
+                            "is_final_response=True 이지만 텍스트 비어있음: "
+                            "raw_len=%d has_fc=%s interrupted=%s error_code=%s member_id=%s session_id=%s",
+                            len(raw), has_fc, _interrupted, _err_code, req.member_id, req.session_id,
+                        )
         except Exception:
             logger.exception("run_async 실패: member_id=%s session_id=%s", req.member_id, req.session_id)
 
         if not final_text:
+            if _fallback_text:
+                logger.warning(
+                    "final_response 텍스트 없음 → fallback 텍스트로 대체: member_id=%s session_id=%s",
+                    req.member_id, req.session_id,
+                )
             final_text = _fallback_text
         if not final_text:
+            logger.error(
+                "응답 텍스트 완전 없음 → 하드코딩 폴백 반환: member_id=%s session_id=%s",
+                req.member_id, req.session_id,
+            )
             final_text = "레오가 잠깐 생각 중이야! 😊 다시 한번 말해줄래?"
 
         # 실행 후 state에서 CTA/todos 수거
@@ -247,7 +287,29 @@ class AgentRunner:
                 new_message=message,
                 state_delta=reset_delta,
             ):
+                _err_code = getattr(event, "error_code", None)
+                _err_msg = getattr(event, "error_message", None)
+                _interrupted = getattr(event, "interrupted", None)
+
+                logger.debug(
+                    "ADK event (trajectory): is_final=%s interrupted=%s error_code=%s error_msg=%s has_content=%s member_id=%s",
+                    event.is_final_response(), _interrupted, _err_code, _err_msg,
+                    bool(event.content and event.content.parts), req.member_id,
+                )
+
+                if _err_code or _err_msg:
+                    logger.warning(
+                        "ADK 에러 이벤트 (trajectory): error_code=%s error_msg=%s member_id=%s session_id=%s",
+                        _err_code, _err_msg, req.member_id, req.session_id,
+                    )
+
                 if not (event.content and event.content.parts):
+                    if event.is_final_response():
+                        logger.warning(
+                            "is_final_response=True 이지만 content/parts 없음 (trajectory): "
+                            "interrupted=%s error_code=%s member_id=%s session_id=%s",
+                            _interrupted, _err_code, req.member_id, req.session_id,
+                        )
                     continue
 
                 has_fc = False
@@ -260,24 +322,42 @@ class AgentRunner:
                         )
 
                 if not has_fc and getattr(event.content, "role", None) == "model":
-                    candidate = _clean_model_text("".join(
-                        p.text for p in event.content.parts if getattr(p, "text", None)
-                    ))
+                    raw = "".join(p.text for p in event.content.parts if getattr(p, "text", None))
+                    candidate = _clean_model_text(raw)
                     if candidate:
                         _fallback_text = candidate
+                    elif raw:
+                        logger.debug(
+                            "_clean_model_text가 fallback 텍스트를 완전히 제거함 (trajectory): raw_len=%d member_id=%s",
+                            len(raw), req.member_id,
+                        )
 
                 if event.is_final_response():
-                    candidate = _clean_model_text("".join(
-                        p.text for p in event.content.parts if getattr(p, "text", None)
-                    ))
+                    raw = "".join(p.text for p in event.content.parts if getattr(p, "text", None))
+                    candidate = _clean_model_text(raw)
                     if candidate:
                         final_text = candidate
+                    else:
+                        logger.warning(
+                            "is_final_response=True 이지만 텍스트 비어있음 (trajectory): "
+                            "raw_len=%d has_fc=%s interrupted=%s error_code=%s member_id=%s session_id=%s",
+                            len(raw), has_fc, _interrupted, _err_code, req.member_id, req.session_id,
+                        )
         except Exception:
             logger.exception("run_async 실패 (trajectory): member_id=%s session_id=%s", req.member_id, req.session_id)
 
         if not final_text:
+            if _fallback_text:
+                logger.warning(
+                    "final_response 텍스트 없음 → fallback 텍스트로 대체 (trajectory): member_id=%s session_id=%s",
+                    req.member_id, req.session_id,
+                )
             final_text = _fallback_text
         if not final_text:
+            logger.error(
+                "응답 텍스트 완전 없음 → 하드코딩 폴백 반환 (trajectory): member_id=%s session_id=%s",
+                req.member_id, req.session_id,
+            )
             final_text = "레오가 잠깐 생각 중이야! 😊 다시 한번 말해줄래?"
 
         session = await self._session_service.get_session(
