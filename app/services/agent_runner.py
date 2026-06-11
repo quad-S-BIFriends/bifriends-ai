@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 from google import genai
 from google.adk.runners import Runner
 from google.adk.sessions import DatabaseSessionService
+from google.adk.sessions.base_session_service import GetSessionConfig
 from google.genai import types
 
 from app.agents.leo.agent import leo_agent
@@ -38,6 +39,25 @@ from app.schemas.chat import ChatRequest, ChatResponse
 from app.services.be_client import be_client
 
 _APP_NAME = "bifriends"
+
+# 세션 이벤트(대화 이력)를 최근 N개로 제한 — 세션이 너무 길어지면 Gemini가
+# empty response를 반환하는 문제를 방지.  state(member_id·grade 등)는 별도
+# 저장되므로 이력 제한과 무관하게 정상 로드됨.
+_SESSION_MAX_EVENTS = 60
+
+
+class _LimitedSessionService(DatabaseSessionService):
+    """get_session 호출 시 최근 N개 이벤트만 로드하도록 제한한 세션 서비스."""
+
+    async def get_session(self, *, app_name, user_id, session_id, config=None):
+        if config is None:
+            config = GetSessionConfig(num_recent_events=_SESSION_MAX_EVENTS)
+        return await super().get_session(
+            app_name=app_name,
+            user_id=user_id,
+            session_id=session_id,
+            config=config,
+        )
 
 # Gemini 2.5 thinking 모델이 function_call 이벤트에 system instruction을 텍스트로 포함하는 버그 대응.
 # leo_dynamic.txt 첫 줄과 일치하는 마커로 에코 감지.
@@ -111,7 +131,7 @@ class AgentRunner:
         self._genai: genai.Client | None = None
 
     async def initialize(self) -> None:
-        self._session_service = DatabaseSessionService(db_url=settings.session_db_url)
+        self._session_service = _LimitedSessionService(db_url=settings.session_db_url)
         self._runner = Runner(
             agent=leo_agent,
             app_name=_APP_NAME,

@@ -15,9 +15,13 @@ state 키:
 """
 from __future__ import annotations
 
+import logging
+
 from google.adk.tools import ToolContext
 
 from app.services.be_client import be_client
+
+logger = logging.getLogger(__name__)
 
 STATE_MEMBER_ID = "member_id"
 STATE_TODOS_CREATED = "todos_created"
@@ -50,21 +54,31 @@ async def create_todo(titles: list[str], tool_context: ToolContext) -> dict:
         - skipped: 한도 초과로 등록하지 못한 개수 (0이면 전부 등록됨)
     """
     member_id = tool_context.state.get(STATE_MEMBER_ID)
+    if member_id is None:
+        logger.error("create_todo: session state에 member_id 없음 — 등록 불가")
+        return {"created_count": 0, "skipped": len(titles), "failed": 0, "error": "member_id_missing"}
 
     to_create = titles[:_MAX_AGENT_TODOS]
     skipped = len(titles) - len(to_create)
 
     created: list[dict] = []
+    failed = 0
     for title in to_create:
-        resp = await be_client.create_todo(member_id, title)
-        created.append({
-            "title": resp.get("title", title),
-            "assigned_date": resp.get("assignedDate"),
-        })
+        try:
+            resp = await be_client.create_todo(member_id, title)
+            created.append({
+                "title": resp.get("title", title),
+                "assigned_date": resp.get("assignedDate"),
+            })
+        except Exception:
+            logger.exception("create_todo: BE 호출 실패 (member_id=%s, title=%s)", member_id, title)
+            failed += 1
 
-    tool_context.state[STATE_TODOS_CREATED] = created
+    if created:
+        tool_context.state[STATE_TODOS_CREATED] = created
 
     return {
         "created_count": len(created),
         "skipped": skipped,
+        "failed": failed,
     }

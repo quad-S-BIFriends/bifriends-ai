@@ -44,28 +44,27 @@ STATE_MATH_CTA = "math_cta"
 _OUT_OF_CURRICULUM_SENTINEL = "모름"
 
 
-def _is_known_concept(concept: str, concepts: list[dict]) -> bool:
-    """LLM이 고른 concept이 실제 캐싱된 목록에 있는지 검증. sentinel "모름"은 항상 False."""
-    if concept == _OUT_OF_CURRICULUM_SENTINEL:
-        return False
-    return any(c.get("concept") == concept for c in concepts)
-
-
 def _build_math_cta(data: dict) -> StepCTA | None:
-    """BE 원본(data)으로 CTA를 결정론적으로 조립. NOT_FOUND면 None."""
+    """BE 원본(data)으로 CTA를 결정론적으로 조립. NOT_FOUND 또는 stepId 없으면 None."""
     status = data.get("lessonStatus")
 
     if status in _NAVIGABLE:
+        step_id = data.get("stepId")
+        if step_id is None:
+            return None
         return StepCTA(
-            label="지금 바로 연습해볼까?",
-            step_id=data["stepId"],
+            label="지금 바로 수학 연습해볼까?",
+            step_id=step_id,
             cycle_number=1,
         )
 
     if status == "LOCKED":
+        step_id = data.get("currentAvailableStepId")
+        if step_id is None:
+            return None
         return StepCTA(
             label="지금 하던 공부 계속하기",
-            step_id=data["currentAvailableStepId"],
+            step_id=step_id,
             cycle_number=1,
         )
 
@@ -104,10 +103,9 @@ async def math_help(concept: str, tool_context: ToolContext) -> dict:
         - locked_concept: LOCKED일 때 아이가 물어본 개념명 — "곧 배우게 될 거야"라고 말해줄 때 사용
     """
     member_id = tool_context.state.get(STATE_MEMBER_ID)
-    concepts = tool_context.state.get(STATE_MATH_CONCEPTS) or []
 
-    # 1) LLM이 고른 concept이 실제 목록에 없으면 → 커리큘럼 밖, 채팅 내 연습문제
-    if not _is_known_concept(concept, concepts):
+    # "모름" sentinel → 커리큘럼 밖, 채팅 내 연습문제
+    if concept == _OUT_OF_CURRICULUM_SENTINEL:
         tool_context.state[STATE_MATH_CTA] = None
         return {
             "matched_concept": None,
@@ -117,7 +115,7 @@ async def math_help(concept: str, tool_context: ToolContext) -> dict:
             "in_chat_practice": True,
         }
 
-    # 2) 정확한 concept으로 BE 상태 조회
+    # BE 호출 — BE가 exact match 우선, 이후 contains 검색으로 처리
     try:
         data = await be_client.get_math_lesson_status(member_id, concept)
     except Exception:
