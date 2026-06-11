@@ -68,6 +68,9 @@ async def build_weekly_report(req: WeeklyReportRequest) -> WeeklyReportResponse:
     # 2. 프롬프트 구성 + LLM 호출
     guide = _load_parent_guide(req.grade)
 
+    nickname = summary.get("nickname") or "아이"
+    learned_expressions: list = summary.get("learnedExpressions") or []
+
     # 이번 주 학습 활동이 전혀 없으면 LLM에 컨텍스트를 명시해 따뜻한 톤 유도
     no_activity = (
         not summary.get("math")
@@ -82,11 +85,19 @@ async def build_weekly_report(req: WeeklyReportRequest) -> WeeklyReportResponse:
         if no_activity else ""
     )
 
+    learned_expr_section = (
+        "\n\n## 이번 주 친구랑에서 배운 감정 표현\n"
+        + ", ".join(f'"{e}"' for e in learned_expressions)
+        if learned_expressions else ""
+    )
+
     prompt = (
         _PROMPT
+        + f"\n\n## 아이 이름\n{nickname}"
         + "\n\n## 이번 아이의 학년대별 부모 역할 가이드\n"
         + guide
         + no_activity_hint
+        + learned_expr_section
         + "\n\n## 학습 집계 데이터\n"
         + json.dumps(summary, ensure_ascii=False)
     )
