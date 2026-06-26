@@ -46,6 +46,18 @@ class BEClient:
         """
         return {"memberId": member_id, **extra}
 
+    @staticmethod
+    def _chat_messages_range_params(member_id: int, week_start: str, week_end: str) -> dict:
+        """
+        BE GET /api/v1/chat/messages — memberId + from/to (ISO DATE_TIME).
+        배치 요청의 week_start/end(yyyy-MM-dd)를 BE 형식으로 변환한다.
+        """
+        return {
+            "memberId": member_id,
+            "from": f"{week_start}T00:00:00",
+            "to": f"{week_end}T23:59:59",
+        }
+
     # ================================================================
     # 학습 — 수학
     # ================================================================
@@ -118,7 +130,7 @@ class BEClient:
         """주간 채팅 메시지 조회 (배치용)."""
         resp = await self.client.get(
             "/api/v1/chat/messages",
-            params={"member_id": member_id, "from": week_start, "to": week_end},
+            params=self._chat_messages_range_params(member_id, week_start, week_end),
         )
         resp.raise_for_status()
         return resp.json()
